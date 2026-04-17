@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 1 of 6 (Foundation)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-04-17 — Roadmap and STATE.md initialized
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-04-17 — Completed 01-01-PLAN.md (project scaffold + BusinessContext)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
@@ -46,6 +46,10 @@ Recent decisions affecting current work:
 - Init: Dual access mode — local folder + live URL crawl
 - Init: GitHub repo distribution only (no npm publish in v1)
 - Init: All 8 tools in one server (single install covers full playbook)
+- 01-01: outDir=./dist (not ./build) to match `node dist/index.js` start script
+- 01-01: module=Node16 for ESM — local imports require .js extension in source
+- 01-01: zod@3 (not zod@4) — matches official quickstart, both work with SDK peer dep
+- 01-01: BusinessContext in src/types/index.ts with zero local imports (leaf node pattern)
 
 ### Pending Todos
 
@@ -59,5 +63,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Roadmap created, ready to plan Phase 1
-Resume file: None
+Stopped at: 01-01-PLAN.md complete — project scaffold + BusinessContext done
+Resume file: .planning/phases/01-foundation/01-02-PLAN.md
