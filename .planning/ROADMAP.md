@@ -31,11 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A stub tool call returns a valid MCP response (not a JSON-RPC parse error)
   4. `BusinessContext` input type is importable by any tool file without circular dependency
   5. console.log() produces no output to stdout — all logging uses console.error()
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Project scaffold (tsconfig, package.json, build script, entry point)
-- [ ] 01-02: MCP server wire-up (StdioServerTransport, tool registration, error handling, stub tool)
+- [ ] 01-01-PLAN.md — Project scaffold: package.json (type: module), tsconfig (outDir: ./dist, Node16 ESM), dependencies (SDK 1.29.0 + zod@3), and BusinessContext shared type (FOUND-02)
+- [ ] 01-02-PLAN.md — MCP server wire-up: register all 8 tool stubs, create src/index.ts entry point with StdioServerTransport, build, and verify via Claude Code (FOUND-01)
 
 ### Phase 2: Acquisition Pipeline
 **Goal**: Any tool can receive a local folder path or a live URL and get back an array of clean MarkdownDocuments
