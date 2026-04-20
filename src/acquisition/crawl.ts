@@ -32,6 +32,30 @@ export const DEFAULT_CRAWL_OPTIONS: CrawlOptions = {
   timeoutMs: 10_000,
 };
 
+// Normalise a URL for deduplication: strip trailing slash from path (except root),
+// strip fragment. This prevents https://example.com and https://example.com/ being
+// treated as separate pages.
+function normaliseUrl(url: string): string {
+  const u = new URL(url);
+  u.hash = '';
+  if (u.pathname !== '/' && u.pathname.endsWith('/')) {
+    u.pathname = u.pathname.slice(0, -1);
+  }
+  return u.href;
+}
+
+// Paths that are infrastructure routes, not real page content.
+const BLOCKED_PATH_PREFIXES = ['/cdn-cgi/'];
+
+function isBlockedPath(url: string): boolean {
+  try {
+    const { pathname } = new URL(url);
+    return BLOCKED_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix));
+  } catch {
+    return false;
+  }
+}
+
 export async function crawlUrl(
   seedUrl: string,
   opts: CrawlOptions = DEFAULT_CRAWL_OPTIONS,
@@ -39,9 +63,10 @@ export async function crawlUrl(
   const base = new URL(seedUrl);
   const baseDomain = base.hostname;
 
+  const normSeed = normaliseUrl(seedUrl);
   // visited tracks URLs at ENQUEUE time — prevents duplicates across concurrent batches
-  const visited = new Set<string>([seedUrl]);
-  const queue: string[] = [seedUrl];
+  const visited = new Set<string>([normSeed]);
+  const queue: string[] = [normSeed];
   const results: AcquisitionResult[] = [];
   const limit = pLimit(opts.concurrency);
 
@@ -60,9 +85,10 @@ export async function crawlUrl(
 
       // Enqueue new same-domain links discovered on this page
       for (const link of item.discoveredLinks) {
-        if (!visited.has(link) && results.length + queue.length < opts.pageCap) {
-          visited.add(link); // Add at enqueue time — not at fetch time
-          queue.push(link);
+        const norm = normaliseUrl(link);
+        if (!visited.has(norm) && results.length + queue.length < opts.pageCap) {
+          visited.add(norm); // Add at enqueue time — not at fetch time
+          queue.push(norm);
         }
       }
     }
@@ -138,10 +164,9 @@ function extractSameDomainLinks(html: string, pageUrl: string, baseDomain: strin
       // e.g. 'example.com.evil.com' would pass a prefix check but fails hostname check
       if (
         abs.hostname === baseDomain &&
-        (abs.protocol === 'http:' || abs.protocol === 'https:')
+        (abs.protocol === 'http:' || abs.protocol === 'https:') &&
+        !isBlockedPath(abs.href)
       ) {
-        // Normalise: strip fragment to avoid fetching same page twice with different anchors
-        abs.hash = '';
         links.push(abs.href);
       }
     } catch {
