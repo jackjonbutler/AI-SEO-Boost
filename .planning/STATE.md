@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 4 - Sitemap, Mirrors, and Schema (COMPLETE — ready for Phase 5)
+**Current focus:** Phase 5 - FAQ Content (COMPLETE — ready for Phase 6)
 
 ## Current Position
 
-Phase: 4 of 6 (Sitemap, Mirrors, Schema) — COMPLETE
-Plan: 3 of 3 in phase — 04-01 done (sitemap XML), 04-02 done (markdown mirrors), 04-03 done (schema markup)
-Status: Phase 4 complete — ready for Phase 5 (FAQ Content)
-Last activity: 2026-04-20 — Completed 04-03 (buildSchemaMarkup + generate_schema_markup handler wired)
+Phase: 5 of 6 (FAQ Content) — COMPLETE
+Plan: 1 of 1 in phase — 05-01 done (buildFaqContent + generate_faq_content handler wired)
+Status: Phase 5 complete — ready for Phase 6
+Last activity: 2026-04-20 — Completed 05-01 (buildFaqContent pure function + handler wired, CONT-03 closed)
 
-Progress: [██████████] 90%
+Progress: [███████████] 95%
 
 ## Performance Metrics
 
@@ -89,10 +89,15 @@ Recent decisions affecting current work:
 - 04-03: placeholderFaqs capped at 5 pairs; Service fallback uses ctx.businessType when ctx.services absent
 - 04-03: buildSchemaMarkup throws on structural errors; handler catches and returns isError:true — never-throw at MCP boundary
 - 04-03: SCHEMA_CONTEXT = 'https://schema.org' module-level constant (HTTPS, no trailing slash, per RESEARCH.md Pitfall 5)
+- 05-01: src/generators/content/faq.ts in new content/ subdirectory — distinguishes data-generating functions from file-emitting generators in files/
+- 05-01: Templates 0-7 always fire (required fields only), guaranteeing >= 8 pairs for any valid BusinessContext
+- 05-01: import type { FaqPair } — type-only import erased at compile time, zero runtime coupling with schema-markup.ts
+- 05-01: buildFaqContent throws on empty businessName/businessType; handler catches and returns isError:true — mirrors 04-03 pattern
+- 05-01: count defaults to 10, clamped to pool size (14 max) — no padding, no duplicate pairs
 
 ### Pending Todos
 
-Phase 5 next: generate_faq_content (real AI-quotable Q&A generation).
+Phase 6 next: generate_location_service_pages full implementation (v2 — currently registered as stub per PROJECT.md).
 
 ### Blockers/Concerns
 
@@ -101,5 +106,5 @@ Phase 5 next: generate_faq_content (real AI-quotable Q&A generation).
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 04-03 complete — Phase 4 fully done (sitemap XML, markdown mirrors, schema markup)
-Resume file: .planning/phases/05-faq-content/ (Phase 5 next)
+Stopped at: 05-01 complete — Phase 5 fully done (FAQ content generator + handler wired, CONT-03 closed)
+Resume file: .planning/phases/06-location-pages/ (Phase 6 next — generate_location_service_pages full implementation)
