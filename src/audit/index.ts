@@ -1,0 +1,50 @@
+// src/audit/index.ts
+// Orchestrates all 5 audit dimensions in parallel and returns a severity-sorted AuditReport.
+
+import * as fs from 'node:fs/promises';
+import { isUrl } from './types.js';
+import type { AuditReport, Severity } from './types.js';
+import { checkLlmsTxt } from './dimensions/llms-txt.js';
+import { checkRobotsTxtAiAccess } from './dimensions/robots-txt.js';
+import { checkSchemaMarkup } from './dimensions/schema.js';
+import { checkFaq } from './dimensions/faq.js';
+import { checkMarkdownMirrors } from './dimensions/markdown.js';
+
+export async function runAudit(target: string): Promise<AuditReport> {
+  if (!target || typeof target !== 'string' || target.trim().length === 0) {
+    throw new Error('target must be a non-empty string');
+  }
+
+  const trimmed = target.trim();
+  let probe: string;
+
+  if (isUrl(trimmed)) {
+    // Use the origin so all dimensions probe the root, not a deep path.
+    probe = new URL(trimmed).origin;
+  } else {
+    // Local folder — confirm it exists before spawning 5 parallel checks.
+    try {
+      await fs.access(trimmed);
+    } catch {
+      throw new Error(`Local target does not exist: ${trimmed}`);
+    }
+    probe = trimmed;
+  }
+
+  const findings = await Promise.all([
+    checkLlmsTxt(probe),
+    checkRobotsTxtAiAccess(probe),
+    checkSchemaMarkup(probe),
+    checkFaq(probe),
+    checkMarkdownMirrors(probe),
+  ]);
+
+  const order: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  findings.sort((a, b) => order[a.severity] - order[b.severity]);
+
+  return {
+    target: trimmed,
+    generatedAt: new Date().toISOString(),
+    findings,
+  };
+}
