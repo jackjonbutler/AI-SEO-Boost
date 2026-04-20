@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 4 of 6 (Sitemap, Mirrors, Schema) — In progress
-Plan: 2 of 3 in phase — 04-01 done (sitemap XML), 04-02 done (markdown mirrors)
-Status: In progress — 04-03 (schema markup) next
-Last activity: 2026-04-20 — Completed 04-02 (buildMarkdownMirror + generate_markdown_mirrors handler wired)
+Phase: 4 of 6 (Sitemap, Mirrors, Schema) — COMPLETE
+Plan: 3 of 3 in phase — 04-01 done (sitemap XML), 04-02 done (markdown mirrors), 04-03 done (schema markup)
+Status: Phase 4 complete — ready for Phase 5 (FAQ Content)
+Last activity: 2026-04-20 — Completed 04-03 (buildSchemaMarkup + generate_schema_markup handler wired)
 
-Progress: [█████████░] 85%
+Progress: [██████████] 90%
 
 ## Performance Metrics
 
@@ -84,10 +84,15 @@ Recent decisions affecting current work:
 - 04-02: Home page slug 'index' writes flat to outputDir/index.md (not outputDir/index/index.md) — per Pitfall 8
 - 04-02: Per-call writtenSlugs Set inside handler (not module-level) — each tool invocation gets fresh collision tracking
 - 04-02: YAML frontmatter values always double-quoted, internal quotes escaped — handles colons, hash chars safely
+- 04-03: generate_schema_markup is a text-return tool (not file-emit) — no outputPath, returns JSON-LD blocks as MCP text content for caller to paste into HTML head
+- 04-03: faqs optional input added proactively so Phase 5 generate_faq_content output can pipe directly without schema change
+- 04-03: placeholderFaqs capped at 5 pairs; Service fallback uses ctx.businessType when ctx.services absent
+- 04-03: buildSchemaMarkup throws on structural errors; handler catches and returns isError:true — never-throw at MCP boundary
+- 04-03: SCHEMA_CONTEXT = 'https://schema.org' module-level constant (HTTPS, no trailing slash, per RESEARCH.md Pitfall 5)
 
 ### Pending Todos
 
-Phase 4 in progress: 04-03 (schema markup) remaining.
+Phase 5 next: generate_faq_content (real AI-quotable Q&A generation).
 
 ### Blockers/Concerns
 
@@ -96,5 +101,5 @@ Phase 4 in progress: 04-03 (schema markup) remaining.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 04-02 complete — buildMarkdownMirror + urlToSlug + generate_markdown_mirrors handler wired
-Resume file: .planning/phases/04-sitemap-mirrors-schema/04-03-PLAN.md
+Stopped at: 04-03 complete — Phase 4 fully done (sitemap XML, markdown mirrors, schema markup)
+Resume file: .planning/phases/05-faq-content/ (Phase 5 next)
