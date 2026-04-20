@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 ## Current Position
 
 Phase: 10 of 10 (Tool Execution Engine)
-Plan: 1 of 1 in current phase
+Plan: 2 of 2 in current phase
 Status: Phase complete — ALL PHASES COMPLETE
-Last activity: 2026-04-20 — Completed 10-01-PLAN.md (Phase 10 execution loop — wizard end-to-end)
+Last activity: 2026-04-20 — Completed 10-02-PLAN.md (smoke test update — Scenario J + Phase 10 assertions)
 
-Progress: [██████████] 100% (10/10 phases complete — v1.1 wizard fully delivered)
+Progress: [██████████] 100% (10/10 phases complete — v1.1 wizard fully delivered and smoke-tested)
 
 ## Performance Metrics
 
@@ -66,6 +66,8 @@ Recent decisions affecting v1.1 work:
 - Phase 10: patchRobotsTxt handles own I/O — no subsequent writeFile call in wizard path
 - Phase 10: generate_schema_markup and generate_faq_content return text only (no file write) — user copies output
 - Phase 10: generate_markdown_mirrors re-crawls target from outer closure (Phase 9 envelope did not include docs)
+- Phase 10 smoke test: per-tool confirmation detection (message.includes('Fix applied:')) as first branch in elicitation handlers — prevents callCount miscount after Phase 10 adds non-gap-fill elicitation calls
+- Phase 10 smoke test: each scenario prints its own SMOKE OK line for per-scenario visibility
 
 ### Pending Todos
 
@@ -78,6 +80,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: Phase 10 complete — 10-01 (Phase 10 execution loop — wizard end-to-end) executed and committed
-Resume file: .planning/phases/10-tool-execution-engine/10-01-SUMMARY.md
-Next: All phases complete. v1.1 wizard feature fully delivered. Consider end-to-end smoke test update for Phases 10 execution scenarios.
+Stopped at: Phase 10 complete — 10-02 (smoke test update — Scenario J + Phase 10 assertions) executed and committed
+Resume file: .planning/phases/10-tool-execution-engine/10-02-SUMMARY.md
+Next: All phases complete. v1.1 wizard fully delivered and smoke-tested. 10/10 scenarios pass.
