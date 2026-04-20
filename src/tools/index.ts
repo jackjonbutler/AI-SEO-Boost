@@ -10,6 +10,7 @@ import { writeFile } from "node:fs/promises";
 import type { BusinessContext } from "../types/index.js";
 import { buildLlmsTxt } from "../generators/files/llms-txt.js";
 import { patchRobotsTxt } from "../generators/files/robots-txt.js";
+import { runAudit } from "../audit/index.js";
 
 // Zod schema mirror of the BusinessContext TypeScript interface.
 // Kept in tools/ (not types/) to keep types/index.ts Zod-free per RESEARCH.md Pattern 3.
@@ -49,7 +50,26 @@ export function registerAllTools(server: McpServer): void {
         businessContext: businessContextSchema,
       },
     },
-    async () => stubResponse("audit_ai_seo", "3"),
+    async ({ target, businessContext: _businessContext }) => {
+      try {
+        if (!target || typeof target !== 'string' || target.trim().length === 0) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: target must be a non-empty string (URL or absolute local folder path)' }],
+            isError: true,
+          };
+        }
+        const report = await runAudit(target.trim());
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify(report, null, 2) }],
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${msg}` }],
+          isError: true,
+        };
+      }
+    },
   );
 
   server.registerTool(
