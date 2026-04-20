@@ -1,17 +1,20 @@
 /**
  * scripts/smoke-audit-wizard-fork.mjs
  *
- * Smoke test for the audit_ai_seo wizard-fork feature (Phase 7 + Phase 8).
+ * Smoke test for the audit_ai_seo wizard-fork feature (Phases 7, 8, 9).
  *
- * Exercises six scenarios against the real audit_ai_seo handler via an
+ * Exercises nine scenarios against the real audit_ai_seo handler via an
  * in-process MCP Client<->Server pair backed by InMemoryTransport:
  *
- *   Scenario A — Wizard path, accept-all:  client accepts mode='wizard', then accepts all issues
+ *   Scenario A — Wizard path, accept-all:  client accepts mode='wizard', accepts all issues, accepts gap-fills
  *   Scenario B — Report path:              client accepts mode='report'  (unchanged from Phase 7)
  *   Scenario C — Fallback path:            client has no elicitation capability (unchanged from Phase 7)
  *   Scenario D — Wizard, deselect-all:     client accepts mode='wizard', then submits empty selection
  *   Scenario E — Wizard, cancel selection: client accepts mode='wizard', then cancels the selection form
  *   Scenario F — All-pass short-circuit:   static check that the all-pass guard string is wired in source
+ *   Scenario G — CTX-01 upfront context:   full businessContext provided; no businessContext keys in gap-fills
+ *   Scenario H — CTX-02 lazy gather:       no upfront context; fields asked lazily when needed by tool
+ *   Scenario I — CTX-03 carry-forward:     no upfront context; gap-fill schemas have disjoint key sets
  *
  * Run after `npm run build`:
  *   node scripts/smoke-audit-wizard-fork.mjs
@@ -57,13 +60,33 @@ async function connect(server, clientInfo, clientOptions) {
 }
 
 // ---------------------------------------------------------------------------
-// Scenario A: Wizard path — accept all selected issues
+// Helper: synthesize a gap-fill accept response for any requestedSchema.
+// Records all property keys into the `seen` Set (pass null to skip tracking).
+// Returns string fields as '/tmp/smoke-placeholder', arrays as ['LocalBusiness'].
+// ---------------------------------------------------------------------------
+function synthesizeGapFillResponse(req, seen) {
+  const props = req.params?.requestedSchema?.properties ?? {};
+  const content = {};
+  for (const [key, schema] of Object.entries(props)) {
+    if (seen) seen.add(key);
+    if (schema && schema.type === 'array') {
+      content[key] = ['LocalBusiness'];
+    } else {
+      content[key] = '/tmp/smoke-placeholder';
+    }
+  }
+  return { action: 'accept', content };
+}
+
+// ---------------------------------------------------------------------------
+// Scenario A: Wizard path — accept all selected issues (Phase 9 updated)
 // Client advertises elicitation capability.
-// First elicit call: mode='wizard'. Second elicit call: accept all pre-selected issues.
-// Asserts the response contains the Phase 8 envelope with selectedFindings.
+// Call 1: mode='wizard'. Call 2: accept all pre-selected issues.
+// Calls 3+: generic gap-fill accept (Phase 9 accumulator may ask for tool fields).
+// Asserts the response contains the Phase 9 envelope with all four keys.
 // ---------------------------------------------------------------------------
 async function scenarioA() {
-  const label = 'Scenario A (wizard path — accept-all)';
+  const label = 'Scenario A (wizard path — accept-all, Phase 9 envelope)';
   const server = createServer();
   const client = await connect(
     server,
@@ -71,7 +94,7 @@ async function scenarioA() {
     { capabilities: { elicitation: { form: {} } } },
   );
 
-  // Stateful two-call handler: first call = mode fork, second call = issue selection.
+  // Stateful handler: call 1 = mode fork, call 2 = issue selection, calls 3+ = gap-fills.
   let callCount = 0;
   client.setRequestHandler(ElicitRequestSchema, async (req) => {
     callCount += 1;
@@ -79,9 +102,13 @@ async function scenarioA() {
       // First call: mode fork — choose wizard
       return { action: 'accept', content: { mode: 'wizard' } };
     }
-    // Second call: issue selection — extract default keys from schema and accept all
-    const defaultSelection = req.params?.requestedSchema?.properties?.selectedIssues?.default ?? [];
-    return { action: 'accept', content: { selectedIssues: defaultSelection } };
+    if (callCount === 2) {
+      // Second call: issue selection — extract default keys from schema and accept all
+      const defaultSelection = req.params?.requestedSchema?.properties?.selectedIssues?.default ?? [];
+      return { action: 'accept', content: { selectedIssues: defaultSelection } };
+    }
+    // Calls 3+: Phase 9 gap-fill — accept with synthesized values
+    return synthesizeGapFillResponse(req, null);
   });
 
   const result = await client.callTool({
@@ -92,9 +119,9 @@ async function scenarioA() {
   assert(!result.isError, label, `tool returned isError=true: ${JSON.stringify(result.content)}`);
   const text = result.content[0]?.text ?? '';
   assert(
-    text.includes('Issue selection complete — fix generation lands in Phase 9'),
+    text.includes('Context accumulation complete — tool execution lands in Phase 10'),
     label,
-    `response missing Phase 8 marker. Got: ${text.slice(0, 300)}`,
+    `response missing Phase 9 marker. Got: ${text.slice(0, 300)}`,
   );
   let parsed;
   try {
@@ -102,11 +129,10 @@ async function scenarioA() {
   } catch (e) {
     assert(false, label, `response is not valid JSON: ${text.slice(0, 300)}`);
   }
-  assert(
-    Array.isArray(parsed.selectedFindings),
-    label,
-    `parsed response missing 'selectedFindings' array. Got keys: ${Object.keys(parsed).join(', ')}`,
-  );
+  assert(Array.isArray(parsed.selectedFindings), label, `parsed response missing 'selectedFindings' array. Got keys: ${Object.keys(parsed).join(', ')}`);
+  assert(Array.isArray(parsed.skippedFindings), label, `parsed response missing 'skippedFindings' array. Got keys: ${Object.keys(parsed).join(', ')}`);
+  assert(typeof parsed.accumulatedContext === 'object' && parsed.accumulatedContext !== null, label, `parsed response missing 'accumulatedContext' object`);
+  assert(typeof parsed.contextSummary === 'string', label, `parsed response missing 'contextSummary' string`);
   assert(
     parsed.selectedFindings.length > 0,
     label,
@@ -301,15 +327,242 @@ async function scenarioF() {
 }
 
 // ---------------------------------------------------------------------------
+// Scenario G: CTX-01 — upfront businessContext reuse
+// Full businessContext provided. Asserts that no businessContext field key
+// (businessName, businessType, location, services, website, phoneNumber,
+// description) appears in any gap-fill elicitation schema after call 2.
+// Tool-specific fields (outputPath, robotsPath, etc.) may still be asked.
+// ---------------------------------------------------------------------------
+async function scenarioG() {
+  const label = 'Scenario G (CTX-01 upfront context — no businessContext field re-ask)';
+  const server = createServer();
+  const client = await connect(
+    server,
+    { name: 'smoke-g', version: '0.0.0' },
+    { capabilities: { elicitation: { form: {} } } },
+  );
+
+  const businessContextKeys = new Set([
+    'businessName', 'businessType', 'location', 'services',
+    'website', 'phoneNumber', 'description',
+  ]);
+
+  let callCount = 0;
+  client.setRequestHandler(ElicitRequestSchema, async (req) => {
+    callCount += 1;
+    if (callCount === 1) {
+      return { action: 'accept', content: { mode: 'wizard' } };
+    }
+    if (callCount === 2) {
+      const defaultSelection = req.params?.requestedSchema?.properties?.selectedIssues?.default ?? [];
+      return { action: 'accept', content: { selectedIssues: defaultSelection } };
+    }
+    // Call 3+: gap-fill — assert no businessContext keys appear in schema
+    const props = req.params?.requestedSchema?.properties ?? {};
+    for (const key of Object.keys(props)) {
+      assert(
+        !businessContextKeys.has(key),
+        label,
+        `Gap-fill elicitation (call ${callCount}) asked for businessContext field '${key}' — CTX-01 violated (field was provided upfront)`,
+      );
+    }
+    return synthesizeGapFillResponse(req, null);
+  });
+
+  const result = await client.callTool({
+    name: 'audit_ai_seo',
+    arguments: {
+      target: process.cwd(),
+      businessContext: {
+        businessName: 'Acme Wraps',
+        businessType: 'vehicle wrap shop',
+        location: 'Denver, CO',
+        services: ['Vehicle wraps', 'Fleet graphics'],
+        website: 'https://acmewraps.com',
+        phoneNumber: '303-555-0100',
+        description: "Acme Wraps is Denver's premier vehicle wrap studio.",
+      },
+    },
+  });
+
+  assert(!result.isError, label, `tool returned isError: ${JSON.stringify(result.content)}`);
+  const text = result.content[0]?.text ?? '';
+  assert(
+    text.includes('Context accumulation complete'),
+    label,
+    `Phase 9 marker missing. Got: ${text.slice(0, 200)}`,
+  );
+  let parsed;
+  try { parsed = JSON.parse(text); } catch (e) {
+    assert(false, label, `response is not valid JSON: ${text.slice(0, 300)}`);
+  }
+  assert(
+    parsed.accumulatedContext?.businessName === 'Acme Wraps',
+    label,
+    `accumulatedContext.businessName should be 'Acme Wraps', got: ${parsed.accumulatedContext?.businessName}`,
+  );
+
+  await client.close();
+}
+
+// ---------------------------------------------------------------------------
+// Scenario H: CTX-02 — lazy gather (no upfront context)
+// No businessContext argument. Fields are asked lazily only when a tool needs them.
+// Proves that required businessContext fields appear in gap-fills when relevant tools fire,
+// and that businessName appears at most once across all gap-fills (CTX-03 implied).
+// ---------------------------------------------------------------------------
+async function scenarioH() {
+  const label = 'Scenario H (CTX-02 lazy gather — no upfront context)';
+  const server = createServer();
+  const client = await connect(
+    server,
+    { name: 'smoke-h', version: '0.0.0' },
+    { capabilities: { elicitation: { form: {} } } },
+  );
+
+  let callCount = 0;
+  let businessNameAskCount = 0;
+  const allPropertiesSeen = [];
+
+  client.setRequestHandler(ElicitRequestSchema, async (req) => {
+    callCount += 1;
+    if (callCount === 1) {
+      return { action: 'accept', content: { mode: 'wizard' } };
+    }
+    if (callCount === 2) {
+      const defaultSelection = req.params?.requestedSchema?.properties?.selectedIssues?.default ?? [];
+      return { action: 'accept', content: { selectedIssues: defaultSelection } };
+    }
+    // Call 3+: track all properties seen
+    const props = req.params?.requestedSchema?.properties ?? {};
+    const keys = Object.keys(props);
+    allPropertiesSeen.push(...keys);
+    if (keys.includes('businessName')) businessNameAskCount += 1;
+    return synthesizeGapFillResponse(req, null);
+  });
+
+  const result = await client.callTool({
+    name: 'audit_ai_seo',
+    arguments: { target: process.cwd() },
+  });
+
+  assert(!result.isError, label, `tool returned isError: ${JSON.stringify(result.content)}`);
+  const text = result.content[0]?.text ?? '';
+  assert(
+    text.includes('Context accumulation complete'),
+    label,
+    `Phase 9 marker missing. Got: ${text.slice(0, 200)}`,
+  );
+  let parsed;
+  try { parsed = JSON.parse(text); } catch (e) {
+    assert(false, label, `response is not valid JSON: ${text.slice(0, 300)}`);
+  }
+
+  // Determine which tools fired — if any of the businessName-requiring tools appeared,
+  // businessName should have been asked exactly once
+  const contextTools = new Set(['generate_llms_txt', 'generate_schema_markup', 'generate_faq_content']);
+  const contextToolFired = parsed.selectedFindings?.some(
+    (f) => f.suggestedToolCall && contextTools.has(f.suggestedToolCall),
+  ) ?? false;
+
+  if (contextToolFired) {
+    assert(
+      businessNameAskCount >= 1,
+      label,
+      `businessName should have been asked at least once (contextToolFired=true), but was not asked`,
+    );
+    assert(
+      businessNameAskCount === 1,
+      label,
+      `businessName was asked ${businessNameAskCount} times — should be asked exactly once (CTX-03 carry-forward)`,
+    );
+    // Verify the accumulated context received the placeholder value
+    assert(
+      parsed.accumulatedContext?.businessName === '/tmp/smoke-placeholder',
+      label,
+      `accumulatedContext.businessName should be '/tmp/smoke-placeholder', got: ${parsed.accumulatedContext?.businessName}`,
+    );
+  }
+  // If no contextTool fired, businessName should not have been asked
+  if (!contextToolFired) {
+    assert(
+      businessNameAskCount === 0,
+      label,
+      `businessName asked ${businessNameAskCount} times despite no contextTool firing`,
+    );
+  }
+
+  await client.close();
+}
+
+// ---------------------------------------------------------------------------
+// Scenario I: CTX-03 — carry-forward proof (disjoint gap-fill key sets)
+// No upfront context. Asserts that no property key appears in more than one
+// gap-fill elicitation schema — proving each field is asked at most once.
+// ---------------------------------------------------------------------------
+async function scenarioI() {
+  const label = 'Scenario I (CTX-03 carry-forward — disjoint gap-fill schemas)';
+  const server = createServer();
+  const client = await connect(
+    server,
+    { name: 'smoke-i', version: '0.0.0' },
+    { capabilities: { elicitation: { form: {} } } },
+  );
+
+  let callCount = 0;
+  const seenKeys = new Set();
+
+  client.setRequestHandler(ElicitRequestSchema, async (req) => {
+    callCount += 1;
+    if (callCount === 1) {
+      return { action: 'accept', content: { mode: 'wizard' } };
+    }
+    if (callCount === 2) {
+      const defaultSelection = req.params?.requestedSchema?.properties?.selectedIssues?.default ?? [];
+      return { action: 'accept', content: { selectedIssues: defaultSelection } };
+    }
+    // Call 3+: assert every property key in this gap-fill is NEW (not seen before)
+    const props = req.params?.requestedSchema?.properties ?? {};
+    for (const key of Object.keys(props)) {
+      assert(
+        !seenKeys.has(key),
+        label,
+        `Gap-fill call ${callCount} asked for property '${key}' which was already asked in a previous gap-fill — CTX-03 violated`,
+      );
+      seenKeys.add(key);
+    }
+    return synthesizeGapFillResponse(req, null);
+  });
+
+  const result = await client.callTool({
+    name: 'audit_ai_seo',
+    arguments: { target: process.cwd() },
+  });
+
+  assert(!result.isError, label, `tool returned isError: ${JSON.stringify(result.content)}`);
+  const text = result.content[0]?.text ?? '';
+  assert(
+    text.includes('Context accumulation complete'),
+    label,
+    `Phase 9 marker missing. Got: ${text.slice(0, 200)}`,
+  );
+
+  await client.close();
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
-  await scenarioA();   // wizard accept-all
+  await scenarioA();   // wizard accept-all (Phase 9 envelope)
   await scenarioB();   // report path
   await scenarioC();   // elicitation-unsupported fallback
   await scenarioD();   // wizard deselect-all
   await scenarioE();   // wizard cancel selection
   await scenarioF();   // all-pass short-circuit (static)
+  await scenarioG();   // CTX-01 upfront context — no businessContext re-ask
+  await scenarioH();   // CTX-02 lazy gather — no upfront context
+  await scenarioI();   // CTX-03 carry-forward — disjoint gap-fill schemas
   process.stdout.write('SMOKE OK\n');
 }
 
