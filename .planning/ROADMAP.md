@@ -106,10 +106,10 @@ Plans:
   2. Each of the 8 tools has a documented example input and expected output in the README
   3. Known limitations (JS-rendered sites, UTF-8 only, page cap) are documented
   4. A developer with Node 18+ can run `npm install && npm run build` and have a working server with no additional setup
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 06-01: README and tool documentation
+- [ ] 06-01-PLAN.md — README (root-level): prerequisites, 4-step install, Claude Desktop (macOS/Windows/Windows-MSIX) + Claude Code config, 8-tool reference with shared businessContext block and per-tool examples, known limitations, troubleshooting
 
 ## Progress
 
