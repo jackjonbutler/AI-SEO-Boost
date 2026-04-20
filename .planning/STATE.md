@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 7 — Wizard Entry Point (v1.1)
+**Current focus:** Phase 8 — Issue Selection (v1.1)
 
 ## Current Position
 
-Phase: 7 of 10 (Wizard Entry Point)
+Phase: 8 of 10 (Issue Selection)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-04-20 — Completed 07-01-PLAN.md (wizard entry point)
+Last activity: 2026-04-20 — Completed 08-01-PLAN.md (multi-select issue-selection elicitation)
 
-Progress: [███████░░░] 70% (7/10 phases complete — v1.0 done, Phase 7 done)
+Progress: [████████░░] 80% (8/10 phases complete — v1.0 done, Phases 7-8 done)
 
 ## Performance Metrics
 
@@ -54,6 +54,9 @@ Recent decisions affecting v1.1 work:
 - Phase 7: wizard path returns JSON envelope {marker, report, businessContext} for Phase 8 to consume
 - Phase 7: elicitation fork uses server.server.elicitInput() in closure, wrapped in inner try/catch for fallback
 - Phase 7: client must declare capabilities.elicitation.form (not just .elicitation) to satisfy server-side form check
+- Phase 8: dimension:status composite keys used for multi-select const values — stable for v1 (one finding per dimension)
+- Phase 8: no try/catch around second elicitInput — errors propagate to outer catch (returns isError:true)
+- Phase 8: Phase 9 input contract: {marker, selectedFindings, businessContext} — Phase 9 starts at the final return in the if (useWizard) branch
 
 ### Pending Todos
 
@@ -66,6 +69,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: Phase 7 complete — 07-01 (wizard entry point) executed and committed
-Resume file: .planning/phases/07-wizard-entry-point/07-01-SUMMARY.md
-Next: Phase 8 — Issue Selection (replace wizard stub in src/tools/index.ts with real elicitation)
+Stopped at: Phase 8 complete — 08-01 (multi-select issue-selection elicitation) executed and committed
+Resume file: .planning/phases/08-issue-selection/08-01-SUMMARY.md
+Next: Phase 9 — Fix Generation (consume selectedFindings + businessContext in the if (useWizard) branch to drive sequential fix tools)
