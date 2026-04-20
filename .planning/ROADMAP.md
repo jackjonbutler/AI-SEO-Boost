@@ -84,11 +84,11 @@ Plans:
   3. Each tool invocation only requests fields not already in accumulated context — returning users see no repeated questions
   4. After each tool completes, the wizard shows a confirmation of what was written or changed (file path, type, or action)
   5. After all selected issues are resolved, the wizard shows a single summary listing every fix applied in this session
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: Build issue-to-tool routing map and sequential execution driver
-- [ ] 10-02: Wire per-tool result confirmations and end-of-session summary output
+- [ ] 10-01-PLAN.md — Replace Phase 9 final return with execution loop: switch dispatch to 5 generator functions, per-tool try/catch, elicitInput confirmation, plain-text session summary return
+- [ ] 10-02-PLAN.md — Update Scenario A assertion (Phase 9 marker removed) and add Scenario J (end-to-end Phase 10 execution path, 10 scenarios total)
 
 ## Progress
 
@@ -103,4 +103,4 @@ Plans:
 | 7. Wizard Entry Point | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 8. Issue Selection | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 9. Context Accumulation | v1.1 | 1/1 | Complete | 2026-04-20 |
-| 10. Tool Execution Engine | v1.1 | 0/TBD | Not started | - |
+| 10. Tool Execution Engine | v1.1 | 0/2 | Not started | - |
