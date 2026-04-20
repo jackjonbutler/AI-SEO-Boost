@@ -311,7 +311,7 @@ The output directory will contain one subdirectory per page (e.g. `mirrors/servi
 
 ### generate_faq_content
 
-**What it does:** Generates 8–14 AI-quotable Q&A pairs from business details. Answers name the business, cite specific facts, and avoid marketing hedging. Output pipes directly into `generate_schema_markup` as the `faqs` parameter.
+**What it does:** Generates AI-quotable Q&A pairs from business details (default 10, configurable 3–20). Answers name the business, cite specific facts, and avoid marketing hedging. Output pipes directly into `generate_schema_markup` as the `faqs` parameter.
 
 **Example input:**
 
