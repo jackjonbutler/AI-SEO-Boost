@@ -9,9 +9,10 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 ## Current Position
 
-Milestone: v1.1 SHIPPED — planning v1.2
-Status: Between milestones — run `/gsd:new-milestone` to define v1.2 requirements and roadmap
-Last activity: 2026-04-20 — v1.1 milestone archived (Phases 7–10, 5 plans, wizard end-to-end)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v1.2
+Last activity: 2026-04-20 — Milestone v1.2 started
 
 ## Performance Metrics
 
