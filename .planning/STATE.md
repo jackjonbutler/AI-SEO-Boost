@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 5 - FAQ Content (COMPLETE — ready for Phase 6)
+**Current focus:** COMPLETE — all 6 phases shipped
 
 ## Current Position
 
-Phase: 5 of 6 (FAQ Content) — COMPLETE
-Plan: 1 of 1 in phase — 05-01 done (buildFaqContent + generate_faq_content handler wired)
-Status: Phase 5 complete — ready for Phase 6
-Last activity: 2026-04-20 — Completed 05-01 (buildFaqContent pure function + handler wired, CONT-03 closed)
+Phase: 6 of 6 (Distribution) — COMPLETE
+Plan: 1 of 1 in phase — 06-01 done (README.md written, human-verified, DIST-01 closed)
+Status: ALL PHASES COMPLETE — project ships
+Last activity: 2026-04-20 — Completed 06-01 (README.md 416 lines, human approved, DIST-01 closed)
 
-Progress: [███████████] 95%
+Progress: [████████████] 100%
 
 ## Performance Metrics
 
@@ -97,7 +97,12 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-Phase 6 next: generate_location_service_pages full implementation (v2 — currently registered as stub per PROJECT.md).
+None — all 6 phases complete. Project ships.
+
+v2 backlog (not blocking):
+- generate_location_service_pages full implementation (currently registered as stub)
+- iconv-lite charset detection (UTF-8-only documented limitation)
+- JS-rendered site support via headless browser (documented limitation)
 
 ### Blockers/Concerns
 
@@ -106,5 +111,5 @@ Phase 6 next: generate_location_service_pages full implementation (v2 — curren
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 05-01 complete — Phase 5 fully done (FAQ content generator + handler wired, CONT-03 closed)
-Resume file: .planning/phases/06-location-pages/ (Phase 6 next — generate_location_service_pages full implementation)
+Stopped at: 06-01 complete — Phase 6 done, DIST-01 closed, all 6/6 phases complete
+Resume file: N/A — roadmap complete. For v2 work, start new planning cycle.
