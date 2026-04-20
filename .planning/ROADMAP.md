@@ -55,10 +55,10 @@ Plans:
   2. All issues are selected by default — user action is required only to exclude an issue
   3. After the user submits their selection, the wizard confirms which issues will be fixed and proceeds to execution
   4. An empty selection (no issues selected) produces a clear message rather than attempting to run tools
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: Build issue checklist presentation and selection capture, enforce default-all-selected behavior
+- [ ] 08-01-PLAN.md — Replace Phase 7 wizard stub with real multi-select issue-selection elicitation (actionable-findings filter, all-pass guard, default-all-selected checklist, empty-selection guard, Phase 9 envelope handoff), plus three new smoke scenarios covering accept-all / deselect-all / cancel / all-pass
 
 ### Phase 9: Context Accumulation
 **Goal**: Business context provided upfront is reused without re-asking, and context gathered mid-wizard is accumulated across tool invocations
@@ -101,6 +101,6 @@ Plans:
 | 5. FAQ Content | v1.0 | 1/1 | Complete | 2026-04-20 |
 | 6. Distribution | v1.0 | 1/1 | Complete | 2026-04-20 |
 | 7. Wizard Entry Point | v1.1 | 1/1 | Complete | 2026-04-20 |
-| 8. Issue Selection | v1.1 | 0/TBD | Not started | - |
+| 8. Issue Selection | v1.1 | 0/1 | Planned | - |
 | 9. Context Accumulation | v1.1 | 0/TBD | Not started | - |
 | 10. Tool Execution Engine | v1.1 | 0/TBD | Not started | - |
