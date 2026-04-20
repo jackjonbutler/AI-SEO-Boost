@@ -8,6 +8,16 @@ A TypeScript/Node.js MCP server with 7 fully-implemented AI SEO tools. Point Cla
 
 Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
 
+## Current Milestone: v1.1 Interactive Guided Remediation
+
+**Goal:** Extend `audit_ai_seo` with a post-audit fix wizard that walks users through each issue sequentially, firing the right tool with context-aware Q&A.
+
+**Target features:**
+- Post-audit prompt: detailed report or launch fix wizard
+- Toggleable issue checklist — user picks which problems to address
+- Sequential tool execution with accumulated context (no repeated questions)
+- Optional upfront business context vs. fill-in-the-blanks per tool
+
 ## Requirements
 
 ### Validated (v1.0)
@@ -22,10 +32,15 @@ Any website, pointed at this server, gets everything it needs to be recommended 
 - ✓ `generate_faq_content` — generates AI-quotable Q&A blocks from business details, pipes directly into generate_schema_markup — v1.0
 - ✓ README with setup instructions and tool documentation — v1.0
 
-### Active
+### Active (v1.1)
+
+- [ ] Interactive guided remediation wizard — post-audit mode in `audit_ai_seo`: choose report or wizard, toggle issues, fix sequentially with context accumulation
+- [ ] Optional business context at wizard start — user provides URL only OR URL + business details
+- [ ] Per-tool fill-in-the-blanks Q&A — reuse gathered context, only ask for gaps
+
+### Deferred
 
 - [ ] `generate_location_service_pages` — full implementation (currently v2 stub)
-- [ ] Interactive guided remediation — after audit, present checklist of issues, fix them one-by-one asking for inputs per tool
 - [ ] iconv-lite charset detection — UTF-8-only is a documented v1 limitation
 - [ ] JS-rendered site support — headless browser crawl for React/Vue SPAs without SSR
 
@@ -76,4 +91,4 @@ Based on the AI SEO playbook by Brycen Wood (@brycenwood.ai, April 2026). The th
 | Known Limitations before Tools section | Prevents users hitting JS-SPA and UTF-8 limits unexpectedly | ✓ Good — human reviewer confirmed |
 
 ---
-*Last updated: 2026-04-20 after v1.0 milestone*
+*Last updated: 2026-04-20 after v1.1 milestone start*

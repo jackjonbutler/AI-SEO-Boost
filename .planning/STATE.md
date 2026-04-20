@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** COMPLETE — all 6 phases shipped
+**Current focus:** v1.1 — Interactive Guided Remediation
 
 ## Current Position
 
-Phase: 6 of 6 (Distribution) — COMPLETE
-Plan: 1 of 1 in phase — 06-01 done (README.md written, human-verified, DIST-01 closed)
-Status: ALL PHASES COMPLETE — project ships
-Last activity: 2026-04-20 — Completed 06-01 (README.md 416 lines, human approved, DIST-01 closed)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-20 — Milestone v1.1 started (Interactive Guided Remediation)
 
-Progress: [████████████] 100%
+Progress: [░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
