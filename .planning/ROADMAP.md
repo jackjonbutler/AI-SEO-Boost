@@ -46,11 +46,11 @@ Plans:
   2. Given a live URL, the pipeline crawls up to the configured page cap, respects the timeout, and returns MarkdownDocuments
   3. All URLs in returned documents are absolute (no relative hrefs)
   4. A page that fails to fetch or parse returns an error entry instead of crashing the pipeline
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Local acquisition (src/acquisition/local.ts + src/processing/strip.ts + src/processing/convert.ts)
-- [ ] 02-02: URL crawl acquisition (src/acquisition/crawl.ts with p-limit concurrency and AbortSignal timeout)
+- [ ] 02-01-PLAN.md — Install cheerio/turndown/p-limit@6, extend shared types (MarkdownDocument, AcquisitionError), build processing layer (strip.ts, convert.ts), and local acquisition (acquireLocal)
+- [ ] 02-02-PLAN.md — URL crawl acquisition: crawlUrl() with p-limit concurrency, AbortSignal.timeout() per-request, same-domain BFS, and full pipeline integration verification
 
 ### Phase 3: Core Generators
 **Goal**: A user can run the audit to see what is broken, generate a spec-compliant llms.txt, and patch robots.txt to allow AI crawlers — without touching any file manually
