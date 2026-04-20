@@ -92,10 +92,10 @@ Plans:
   1. `generate_faq_content` returns 8–10 Q&A pairs where every answer names the business, cites a specific number or fact, and contains no marketing hedging language
   2. All Q&A content is derived from BusinessContext input — no invented details appear in any answer
   3. The output is structured so it can be directly consumed by `generate_schema_markup` FAQPage type without transformation
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 05-01: FAQ content generator (src/generators/content/faq.ts + tool handler)
+- [ ] 05-01-PLAN.md — FAQ content generator (buildFaqContent pure function in src/generators/content/faq.ts + generate_faq_content handler replacement in src/tools/index.ts)
 
 ### Phase 6: Distribution
 **Goal**: Any developer can clone the repo, follow the README, and have the MCP server running in Claude Code within 10 minutes
