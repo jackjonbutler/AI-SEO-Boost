@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 3 of 6 (Core Generators) — COMPLETE
-Plan: 3 of 3 in phase — all done (03-02 llms.txt, 03-03 robots.txt, 03-01 audit engine)
-Status: Phase 3 fully complete — ready for Phase 4 (sitemap + markdown mirrors)
-Last activity: 2026-04-20 — Completed 03-01 (audit_ai_seo engine: types + 5 dimensions + runAudit + handler)
+Phase: 4 of 6 (Sitemap, Mirrors, Schema) — In progress
+Plan: 1 of 3 in phase — 04-01 done (sitemap XML generator)
+Status: In progress — 04-02 (markdown mirrors) next
+Last activity: 2026-04-20 — Completed 04-01 (buildSitemapXml pure function + generate_sitemap handler wired)
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
@@ -76,10 +76,14 @@ Recent decisions affecting current work:
 - 03-01: Origin normalisation in runAudit — probe = new URL(target).origin so all 5 dims check root, not deep paths
 - 03-01: businessContext renamed _businessContext in handler destructuring only — public inputSchema unchanged
 - 03-01: Question-heading heuristic threshold: >=3 headings with '?' = warning (not fail)
+- 04-01: file:// URLs from local acquisition converted to https:// in resolveToAbsolute via basename extraction — no file:// leaks into sitemap <loc>
+- 04-01: scorePriority operates on resolved absolute URL (post-resolveToAbsolute) — consistent scoring regardless of acquisition mode
+- 04-01: xmlns uses http://www.sitemaps.org/schemas/sitemap/0.9 (http, not https) — correct per sitemaps.org spec
+- 04-01: Empty docs array emits valid urlset with zero url children — never-throw pattern
 
 ### Pending Todos
 
-None — Phase 3 fully complete. Phase 4 (sitemap + markdown mirrors) is next.
+Phase 4 in progress: 04-02 (markdown mirrors) and 04-03 (schema markup) remaining.
 
 ### Blockers/Concerns
 
@@ -88,5 +92,5 @@ None — Phase 3 fully complete. Phase 4 (sitemap + markdown mirrors) is next.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 03-01 complete — audit_ai_seo engine: 5 dimension modules + runAudit orchestrator + tool handler wired
-Resume file: .planning/phases/04-sitemap-mirrors/ — Phase 4 plans
+Stopped at: 04-01 complete — buildSitemapXml pure function + generate_sitemap handler wired
+Resume file: .planning/phases/04-sitemap-mirrors-schema/04-02-PLAN.md
