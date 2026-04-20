@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 4 of 6 (Sitemap, Mirrors, Schema) — In progress
-Plan: 1 of 3 in phase — 04-01 done (sitemap XML generator)
-Status: In progress — 04-02 (markdown mirrors) next
-Last activity: 2026-04-20 — Completed 04-01 (buildSitemapXml pure function + generate_sitemap handler wired)
+Plan: 2 of 3 in phase — 04-01 done (sitemap XML), 04-02 done (markdown mirrors)
+Status: In progress — 04-03 (schema markup) next
+Last activity: 2026-04-20 — Completed 04-02 (buildMarkdownMirror + generate_markdown_mirrors handler wired)
 
 Progress: [█████████░] 85%
 
@@ -80,10 +80,14 @@ Recent decisions affecting current work:
 - 04-01: scorePriority operates on resolved absolute URL (post-resolveToAbsolute) — consistent scoring regardless of acquisition mode
 - 04-01: xmlns uses http://www.sitemaps.org/schemas/sitemap/0.9 (http, not https) — correct per sitemaps.org spec
 - 04-01: Empty docs array emits valid urlset with zero url children — never-throw pattern
+- 04-02: urlToSlug strips /index segment so /services/index.html → 'services' (not 'services/index') — prevents double-nesting
+- 04-02: Home page slug 'index' writes flat to outputDir/index.md (not outputDir/index/index.md) — per Pitfall 8
+- 04-02: Per-call writtenSlugs Set inside handler (not module-level) — each tool invocation gets fresh collision tracking
+- 04-02: YAML frontmatter values always double-quoted, internal quotes escaped — handles colons, hash chars safely
 
 ### Pending Todos
 
-Phase 4 in progress: 04-02 (markdown mirrors) and 04-03 (schema markup) remaining.
+Phase 4 in progress: 04-03 (schema markup) remaining.
 
 ### Blockers/Concerns
 
@@ -92,5 +96,5 @@ Phase 4 in progress: 04-02 (markdown mirrors) and 04-03 (schema markup) remainin
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 04-01 complete — buildSitemapXml pure function + generate_sitemap handler wired
-Resume file: .planning/phases/04-sitemap-mirrors-schema/04-02-PLAN.md
+Stopped at: 04-02 complete — buildMarkdownMirror + urlToSlug + generate_markdown_mirrors handler wired
+Resume file: .planning/phases/04-sitemap-mirrors-schema/04-03-PLAN.md
