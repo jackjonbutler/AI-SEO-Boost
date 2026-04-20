@@ -13,7 +13,7 @@ Six phases that build the MCP server bottom-up: foundation and types first, then
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - MCP server wired on stdio with shared types and error policy in place
-- [ ] **Phase 2: Acquisition Pipeline** - Local folder traversal and live URL crawl with HTML processing shared by all generators
+- [x] **Phase 2: Acquisition Pipeline** - Local folder traversal and live URL crawl with HTML processing shared by all generators
 - [ ] **Phase 3: Core Generators** - Audit, llms.txt, and robots.txt — the entry point and signature features
 - [ ] **Phase 4: Sitemap, Mirrors, and Schema** - URL-based sitemap, markdown mirrors, and standalone JSON-LD schema markup
 - [ ] **Phase 5: FAQ Content** - AI-quotable FAQ generator that feeds schema and enriches business profiles
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-04-20 |
-| 2. Acquisition Pipeline | 0/2 | Not started | - |
+| 2. Acquisition Pipeline | 2/2 | Complete | 2026-04-20 |
 | 3. Core Generators | 0/3 | Not started | - |
 | 4. Sitemap, Mirrors, and Schema | 0/3 | Not started | - |
 | 5. FAQ Content | 0/1 | Not started | - |
