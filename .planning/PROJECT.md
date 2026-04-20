@@ -2,21 +2,15 @@
 
 ## What This Is
 
-A TypeScript/Node.js MCP server with 7 fully-implemented AI SEO tools. Point Claude Code or Claude Desktop at it and it generates, audits, and maintains all AI-visibility assets for any website — whether accessed via local folder or live URL crawl. `generate_location_service_pages` is a v2 stub.
+A TypeScript/Node.js MCP server with 7 fully-implemented AI SEO tools and an interactive guided remediation wizard. Point Claude Code or Claude Desktop at it and it generates, audits, and fixes all AI-visibility assets for any website — whether accessed via local folder or live URL crawl. Run `audit_ai_seo` to audit, then choose the wizard to fix each finding in sequence with no repeated questions. `generate_location_service_pages` is a v2 stub.
 
 ## Core Value
 
 Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
 
-## Current Milestone: v1.1 Interactive Guided Remediation
+## Current Milestone: v1.2 Audit Observability & Framework Awareness (Planning)
 
-**Goal:** Extend `audit_ai_seo` with a post-audit fix wizard that walks users through each issue sequentially, firing the right tool with context-aware Q&A.
-
-**Target features:**
-- Post-audit prompt: detailed report or launch fix wizard
-- Toggleable issue checklist — user picks which problems to address
-- Sequential tool execution with accumulated context (no repeated questions)
-- Optional upfront business context vs. fill-in-the-blanks per tool
+**Goal:** Make audit findings auditable and actionable — add diagnostic evidence per finding, framework detection for context-aware fix guidance, semantic schema type inference, and mirror coverage depth reporting.
 
 ## Requirements
 
@@ -32,11 +26,20 @@ Any website, pointed at this server, gets everything it needs to be recommended 
 - ✓ `generate_faq_content` — generates AI-quotable Q&A blocks from business details, pipes directly into generate_schema_markup — v1.0
 - ✓ README with setup instructions and tool documentation — v1.0
 
-### Active (v1.1)
+### Validated (v1.1)
 
-- [ ] Interactive guided remediation wizard — post-audit mode in `audit_ai_seo`: choose report or wizard, toggle issues, fix sequentially with context accumulation
-- [ ] Optional business context at wizard start — user provides URL only OR URL + business details
-- [ ] Per-tool fill-in-the-blanks Q&A — reuse gathered context, only ask for gaps
+- ✓ Interactive guided remediation wizard — post-audit mode in `audit_ai_seo`: report or wizard fork, toggleable issue checklist, sequential tool execution — v1.1
+- ✓ Optional business context at wizard start — threads through to all tool invocations — v1.1
+- ✓ Per-tool fill-in-the-blanks Q&A — TOOL_FIELD_MAP + AccumulatedContext, never re-asks a field — v1.1
+
+### Active (v1.2)
+
+- [ ] Diagnostic block per audit finding — HTTP status, bytes fetched, UA string, matched/missing values — so findings are auditable, not just reported
+- [ ] Framework detection — detect Nuxt (`/_nuxt/`), Next.js (`/_next/`), etc. from asset paths; include framework-specific file placement in fix suggestions
+- [ ] Schema type inference from `businessContext.businessType` — stop prescribing LocalBusiness universally; infer the correct type from context
+- [ ] Mirror coverage depth — report percentage of routes covered, not just home-page pass/fail; sample routes from sitemap
+- [ ] `pagesAudited` field in audit response — list of URLs crawled so caller knows crawl scope
+- [ ] `suggestedToolCallArgs` pre-populated from audit's existing context — enable one-click wizard handoff without re-prompting
 
 ### Deferred
 
@@ -52,6 +55,8 @@ Any website, pointed at this server, gets everything it needs to be recommended 
 - Authentication/multi-tenant — single-user local tool, not a SaaS
 
 ## Context
+
+**v1.1 shipped 2026-04-20** — 4 phases (7–10), 5 plans, ~4,500 lines added (18 files changed). Wizard lives entirely inside `audit_ai_seo` handler in `src/tools/index.ts`.
 
 **v1.0 shipped 2026-04-20** — 6 phases, 12 plans, 1,914 lines TypeScript, 71 files.
 
@@ -89,6 +94,14 @@ Based on the AI SEO playbook by Brycen Wood (@brycenwood.ai, April 2026). The th
 | generate_schema_markup as text-return tool | Returns JSON-LD blocks as text; no file path needed | ✓ Good — user pastes into HTML head |
 | README single document | No separate INSTALL.md or CONTRIBUTING.md in v1 | ✓ Good — frictionless getting-started path |
 | Known Limitations before Tools section | Prevents users hitting JS-SPA and UTF-8 limits unexpectedly | ✓ Good — human reviewer confirmed |
+| Wizard is a post-audit mode inside `audit_ai_seo`, not a separate tool | No new tool registration needed; reuses existing audit invocation | ✓ Good — single entry point for audit+fix |
+| businessContext optional only in `audit_ai_seo` | All other 6 tools keep it required — no schema changes | ✓ Good — minimal blast radius |
+| Elicitation fork uses `server.server.elicitInput()` in closure | Must use server-side API, not client capability pre-check | ✓ Good — fallback to report mode on unsupported clients |
+| Composite key `dimension:status` for multi-select const values | Stable identifier per finding for v1 (one finding per dimension) | ✓ Good — clean deselection semantics |
+| TOOL_FIELD_MAP as static module-scope constant | Maps suggestedToolCall → required/optional field lists at compile time | ✓ Good — no runtime lookups |
+| AccumulatedContext = Partial<BusinessContext> & WizardToolFields | Unified accumulator merges upfront context and mid-wizard gap-fill | ✓ Good — single source of truth for what is known |
+| `as any` cast for dynamically-built gap-fill properties object | SDK PrimitiveSchemaDefinitionSchema union incompatible with Record<string, unknown> | ⚠ Revisit — type safety gap; acceptable for v1 |
+| generate_markdown_mirrors re-crawls target in wizard path | Phase 9 envelope doesn't carry docs; re-crawl is simplest approach | ⚠ Revisit — redundant crawl in wizard sessions |
 
 ---
-*Last updated: 2026-04-20 after v1.1 milestone start*
+*Last updated: 2026-04-20 after v1.1 milestone*

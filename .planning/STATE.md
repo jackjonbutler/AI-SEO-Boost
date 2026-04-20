@@ -2,19 +2,16 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-20)
+See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 10 — Tool Execution Engine (v1.1) — COMPLETE
+**Current focus:** Planning v1.2 — Audit Observability & Framework Awareness
 
 ## Current Position
 
-Phase: 10 of 10 (Tool Execution Engine)
-Plan: 2 of 2 in current phase
-Status: Phase complete — ALL PHASES COMPLETE
-Last activity: 2026-04-20 — Completed 10-02-PLAN.md (smoke test update — Scenario J + Phase 10 assertions)
-
-Progress: [██████████] 100% (10/10 phases complete — v1.1 wizard fully delivered and smoke-tested)
+Milestone: v1.1 SHIPPED — planning v1.2
+Status: Between milestones — run `/gsd:new-milestone` to define v1.2 requirements and roadmap
+Last activity: 2026-04-20 — v1.1 milestone archived (Phases 7–10, 5 plans, wizard end-to-end)
 
 ## Performance Metrics
 
@@ -80,6 +77,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: Phase 10 complete — 10-02 (smoke test update — Scenario J + Phase 10 assertions) executed and committed
-Resume file: .planning/phases/10-tool-execution-engine/10-02-SUMMARY.md
-Next: All phases complete. v1.1 wizard fully delivered and smoke-tested. 10/10 scenarios pass.
+Stopped at: v1.1 milestone archived — planning v1.2
+Next: `/gsd:new-milestone` to define v1.2 Audit Observability & Framework Awareness requirements and roadmap
