@@ -17,10 +17,14 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "cheerio": "^1.2.0",
+    "p-limit": "^6.2.0",
+    "turndown": "^7.2.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
+    "@types/turndown": "^5.0.6",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

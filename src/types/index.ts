@@ -38,3 +38,31 @@ export interface BusinessContext {
   /** Optional: 1-3 sentence business description used in llms.txt summary blockquote. */
   description?: string;
 }
+
+export interface MarkdownDocument {
+  /** Absolute URL this document was sourced from. For local files, use file:// URI. */
+  url: string;
+  /** Page title extracted from <title> or <h1>. */
+  title: string;
+  /** Meta description content if present, empty string if absent. */
+  description: string;
+  /** Markdown body with chrome stripped and all hrefs absolutised. */
+  markdown: string;
+  /** YAML frontmatter fields as a plain object. */
+  frontmatter: Record<string, string>;
+  /** Source type — allows downstream tools to vary behaviour. */
+  source: 'local' | 'crawl';
+}
+
+export interface AcquisitionError {
+  url: string;
+  error: string;
+  source: 'local' | 'crawl';
+}
+
+export type AcquisitionResult = MarkdownDocument | AcquisitionError;
+
+/** Type guard — returns true if result is an AcquisitionError. */
+export function isAcquisitionError(r: AcquisitionResult): r is AcquisitionError {
+  return 'error' in r;
+}
