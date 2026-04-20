@@ -26,7 +26,7 @@ Full archive: `.planning/milestones/v1.0-ROADMAP.md`
 **Milestone Goal:** Extend `audit_ai_seo` with a post-audit fix wizard that walks users through each issue sequentially, firing the right tool with context-aware Q&A and no repeated questions.
 
 - [x] **Phase 7: Wizard Entry Point** — Add `businessContext` input and post-audit mode fork to `audit_ai_seo`
-- [ ] **Phase 8: Issue Selection** — Present a toggleable issue checklist and capture user selection before fix sequence begins
+- [x] **Phase 8: Issue Selection** — Present a toggleable issue checklist and capture user selection before fix sequence begins
 - [ ] **Phase 9: Context Accumulation** — Implement context reuse and mid-wizard gap-fill Q&A so no field is ever asked twice
 - [ ] **Phase 10: Tool Execution Engine** — Route selected issues to fixing tools, execute sequentially, confirm each result, and show final summary
 
@@ -101,6 +101,6 @@ Plans:
 | 5. FAQ Content | v1.0 | 1/1 | Complete | 2026-04-20 |
 | 6. Distribution | v1.0 | 1/1 | Complete | 2026-04-20 |
 | 7. Wizard Entry Point | v1.1 | 1/1 | Complete | 2026-04-20 |
-| 8. Issue Selection | v1.1 | 0/1 | Planned | - |
+| 8. Issue Selection | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 9. Context Accumulation | v1.1 | 0/TBD | Not started | - |
 | 10. Tool Execution Engine | v1.1 | 0/TBD | Not started | - |
