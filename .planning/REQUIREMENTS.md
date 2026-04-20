@@ -52,25 +52,25 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WIZ-01 | TBD | Pending |
-| WIZ-02 | TBD | Pending |
-| ISEL-01 | TBD | Pending |
-| ISEL-02 | TBD | Pending |
-| ISEL-03 | TBD | Pending |
-| CTX-01 | TBD | Pending |
-| CTX-02 | TBD | Pending |
-| CTX-03 | TBD | Pending |
-| EXEC-01 | TBD | Pending |
-| EXEC-02 | TBD | Pending |
-| EXEC-03 | TBD | Pending |
-| EXEC-04 | TBD | Pending |
-| EXEC-05 | TBD | Pending |
+| WIZ-01 | Phase 7 | Pending |
+| WIZ-02 | Phase 7 | Pending |
+| ISEL-01 | Phase 8 | Pending |
+| ISEL-02 | Phase 8 | Pending |
+| ISEL-03 | Phase 8 | Pending |
+| CTX-01 | Phase 9 | Pending |
+| CTX-02 | Phase 9 | Pending |
+| CTX-03 | Phase 9 | Pending |
+| EXEC-01 | Phase 10 | Pending |
+| EXEC-02 | Phase 10 | Pending |
+| EXEC-03 | Phase 10 | Pending |
+| EXEC-04 | Phase 10 | Pending |
+| EXEC-05 | Phase 10 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 13 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 13 ⚠️
+- Mapped to phases: 13 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-20*
-*Last updated: 2026-04-20 after initial definition*
+*Last updated: 2026-04-20 after roadmap creation (Phases 7–10)*
