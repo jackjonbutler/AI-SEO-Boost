@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Core Generators** - Audit, llms.txt, and robots.txt — the entry point and signature features
 - [x] **Phase 4: Sitemap, Mirrors, and Schema** - URL-based sitemap, markdown mirrors, and standalone JSON-LD schema markup
 - [x] **Phase 5: FAQ Content** - AI-quotable FAQ generator that feeds schema and enriches business profiles
-- [ ] **Phase 6: Distribution** - README, Claude Desktop config snippet, and tool documentation
+- [x] **Phase 6: Distribution** - README, Claude Desktop config snippet, and tool documentation
 
 ## Phase Details
 
@@ -123,4 +123,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Core Generators | 3/3 | Complete | 2026-04-20 |
 | 4. Sitemap, Mirrors, and Schema | 3/3 | Complete | 2026-04-20 |
 | 5. FAQ Content | 1/1 | Complete | 2026-04-20 |
-| 6. Distribution | 0/1 | Not started | - |
+| 6. Distribution | 1/1 | Complete | 2026-04-20 |
