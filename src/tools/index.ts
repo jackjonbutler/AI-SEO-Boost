@@ -11,6 +11,11 @@ import type { BusinessContext } from "../types/index.js";
 import { buildLlmsTxt } from "../generators/files/llms-txt.js";
 import { patchRobotsTxt } from "../generators/files/robots-txt.js";
 import { runAudit } from "../audit/index.js";
+import { buildSitemapXml } from "../generators/files/sitemap-xml.js";
+import { acquireLocal } from "../acquisition/local.js";
+import { crawlUrl } from "../acquisition/crawl.js";
+import { isAcquisitionError } from "../types/index.js";
+import type { MarkdownDocument } from "../types/index.js";
 
 // Zod schema mirror of the BusinessContext TypeScript interface.
 // Kept in tools/ (not types/) to keep types/index.ts Zod-free per RESEARCH.md Pattern 3.
@@ -167,7 +172,35 @@ export function registerAllTools(server: McpServer): void {
         outputPath: z.string().describe("Absolute path where sitemap.xml should be written"),
       },
     },
-    async () => stubResponse("generate_sitemap", "4"),
+    async ({ target, baseUrl, outputPath }) => {
+      try {
+        if (!target || typeof target !== 'string' || target.trim().length === 0) {
+          return { content: [{ type: 'text' as const, text: 'Error: target must be a non-empty string (URL or absolute local folder path)' }], isError: true };
+        }
+        if (!baseUrl || typeof baseUrl !== 'string' || baseUrl.trim().length === 0) {
+          return { content: [{ type: 'text' as const, text: 'Error: baseUrl must be a non-empty string (e.g. https://example.com)' }], isError: true };
+        }
+        if (!outputPath || typeof outputPath !== 'string' || outputPath.trim().length === 0) {
+          return { content: [{ type: 'text' as const, text: 'Error: outputPath must be a non-empty string (absolute path where sitemap.xml should be written)' }], isError: true };
+        }
+
+        const t = target.trim();
+        const isUrl = t.startsWith('http://') || t.startsWith('https://');
+        const results = isUrl ? await crawlUrl(t) : await acquireLocal(t);
+        const docs: MarkdownDocument[] = results.filter((r): r is MarkdownDocument => !isAcquisitionError(r));
+
+        if (docs.length === 0) {
+          return { content: [{ type: 'text' as const, text: `Error: no pages acquired from ${t} — nothing to include in sitemap` }], isError: true };
+        }
+
+        const xml = buildSitemapXml(docs, baseUrl.trim());
+        await writeFile(outputPath.trim(), xml, 'utf-8');
+        return { content: [{ type: 'text' as const, text: `sitemap.xml written to ${outputPath.trim()} (${docs.length} URLs, ${xml.length} bytes)` }] };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: 'text' as const, text: `Error: ${msg}` }], isError: true };
+      }
+    },
   );
 
   server.registerTool(
