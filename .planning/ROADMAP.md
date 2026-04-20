@@ -69,10 +69,10 @@ Plans:
   2. When no upfront context is provided, the wizard asks only for the fields required by the first tool that needs them
   3. Any field answered mid-wizard is carried forward — subsequent tools never prompt for it again
   4. The accumulated context state is visible/traceable (e.g., a running summary of what is already known)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 09-01: Implement context accumulator — merge upfront context, track gathered fields, expose gap-fill Q&A interface
+- [ ] 09-01-PLAN.md — Add TOOL_FIELD_MAP + AccumulatedContext types, replace Phase 8 terminal return with a gap-fill accumulator loop (seed from upfront context, per-tool missing-field elicitation, services/schemaTypes post-processing, skippedFindings on cancel, Phase 10 envelope with contextSummary), plus three new smoke scenarios proving CTX-01 / CTX-02 / CTX-03
 
 ### Phase 10: Tool Execution Engine
 **Goal**: Selected issues are resolved by firing the correct fixing tool in priority order, with per-tool confirmations and a final summary of everything changed
@@ -102,5 +102,5 @@ Plans:
 | 6. Distribution | v1.0 | 1/1 | Complete | 2026-04-20 |
 | 7. Wizard Entry Point | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 8. Issue Selection | v1.1 | 1/1 | Complete | 2026-04-20 |
-| 9. Context Accumulation | v1.1 | 0/TBD | Not started | - |
+| 9. Context Accumulation | v1.1 | 0/1 | Not started | - |
 | 10. Tool Execution Engine | v1.1 | 0/TBD | Not started | - |
