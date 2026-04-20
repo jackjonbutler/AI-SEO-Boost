@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1–6 (shipped 2026-04-20)
-- 🚧 **v1.1 Interactive Guided Remediation** — Phases 7–10 (in progress)
+- ✅ **v1.1 Interactive Guided Remediation** — Phases 7–10 (shipped 2026-04-20)
 
 ## Phases
 
@@ -28,7 +28,7 @@ Full archive: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 7: Wizard Entry Point** — Add `businessContext` input and post-audit mode fork to `audit_ai_seo`
 - [x] **Phase 8: Issue Selection** — Present a toggleable issue checklist and capture user selection before fix sequence begins
 - [x] **Phase 9: Context Accumulation** — Implement context reuse and mid-wizard gap-fill Q&A so no field is ever asked twice
-- [ ] **Phase 10: Tool Execution Engine** — Route selected issues to fixing tools, execute sequentially, confirm each result, and show final summary
+- [x] **Phase 10: Tool Execution Engine** — Route selected issues to fixing tools, execute sequentially, confirm each result, and show final summary
 
 ## Phase Details
 
@@ -103,4 +103,4 @@ Plans:
 | 7. Wizard Entry Point | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 8. Issue Selection | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 9. Context Accumulation | v1.1 | 1/1 | Complete | 2026-04-20 |
-| 10. Tool Execution Engine | v1.1 | 0/2 | Not started | - |
+| 10. Tool Execution Engine | v1.1 | 2/2 | Complete | 2026-04-20 |
