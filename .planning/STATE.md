@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 ## Current Position
 
 Phase: 7 of 10 (Wizard Entry Point)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-04-20 — v1.1 roadmap created (Phases 7–10, 13 requirements mapped)
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-04-20 — Completed 07-01-PLAN.md (wizard entry point)
 
-Progress: [██████░░░░] 60% (6/10 phases complete — v1.0 done, v1.1 not started)
+Progress: [███████░░░] 70% (7/10 phases complete — v1.0 done, Phase 7 done)
 
 ## Performance Metrics
 
@@ -50,6 +50,10 @@ Recent decisions affecting v1.1 work:
 - v1.0: All tools registered in tools/index.ts via registerAllTools (wizard routing reads same registry)
 - v1.0: businessContextSchema defined once in tools/index.ts, reused across 7 tools (wizard reuses same schema)
 - v1.1: Wizard is a post-audit mode inside `audit_ai_seo`, not a separate tool
+- Phase 7: businessContext is optional only in audit_ai_seo; all other 6 tools keep it required
+- Phase 7: wizard path returns JSON envelope {marker, report, businessContext} for Phase 8 to consume
+- Phase 7: elicitation fork uses server.server.elicitInput() in closure, wrapped in inner try/catch for fallback
+- Phase 7: client must declare capabilities.elicitation.form (not just .elicitation) to satisfy server-side form check
 
 ### Pending Todos
 
@@ -57,10 +61,11 @@ None.
 
 ### Blockers/Concerns
 
-- v1.1 wizard is a multi-turn conversational flow within a single MCP tool call — confirm MCP SDK supports incremental output or streaming before Phase 7 planning begins.
+None.
 
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: v1.1 roadmap created — ready to plan Phase 7
-Resume file: None
+Stopped at: Phase 7 complete — 07-01 (wizard entry point) executed and committed
+Resume file: .planning/phases/07-wizard-entry-point/07-01-SUMMARY.md
+Next: Phase 8 — Issue Selection (replace wizard stub in src/tools/index.ts with real elicitation)
