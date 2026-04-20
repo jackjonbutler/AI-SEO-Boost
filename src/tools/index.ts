@@ -13,6 +13,8 @@ import { patchRobotsTxt } from "../generators/files/robots-txt.js";
 import { runAudit } from "../audit/index.js";
 import { buildSitemapXml } from "../generators/files/sitemap-xml.js";
 import { buildMarkdownMirror } from "../generators/files/markdown-mirrors.js";
+import { buildSchemaMarkup } from "../generators/files/schema-markup.js";
+import type { FaqPair, SchemaType } from "../generators/files/schema-markup.js";
 import { acquireLocal } from "../acquisition/local.js";
 import { crawlUrl } from "../acquisition/crawl.js";
 import { isAcquisitionError } from "../types/index.js";
@@ -278,9 +280,32 @@ export function registerAllTools(server: McpServer): void {
         schemaTypes: z
           .array(z.enum(["LocalBusiness", "FAQPage", "Service"]))
           .describe("Which schema.org types to emit. Pass all three for a complete set."),
+        faqs: z
+          .array(z.object({
+            question: z.string().describe("The question text, as a user might ask it"),
+            answer: z.string().describe("The answer, naming the business and citing specifics"),
+          }))
+          .optional()
+          .describe("Optional Q&A pairs used when FAQPage is in schemaTypes. If omitted, placeholders are generated from BusinessContext.services. Phase 5's generate_faq_content produces the real input for this field."),
       },
     },
-    async () => stubResponse("generate_schema_markup", "4"),
+    async ({ businessContext, schemaTypes, faqs }) => {
+      try {
+        if (!businessContext || typeof businessContext.businessName !== 'string' || businessContext.businessName.trim().length === 0) {
+          return { content: [{ type: 'text' as const, text: 'Error: businessContext.businessName is required' }], isError: true };
+        }
+        if (!schemaTypes || !Array.isArray(schemaTypes) || schemaTypes.length === 0) {
+          return { content: [{ type: 'text' as const, text: 'Error: schemaTypes must contain at least one of LocalBusiness, FAQPage, Service' }], isError: true };
+        }
+        const blocks = buildSchemaMarkup(businessContext, schemaTypes as SchemaType[], faqs as FaqPair[] | undefined);
+        return {
+          content: [{ type: 'text' as const, text: blocks.join('\n\n') }],
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: 'text' as const, text: `Error: ${msg}` }], isError: true };
+      }
+    },
   );
 
   // ---------- Phase 5 tool ----------
