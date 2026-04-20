@@ -9,6 +9,7 @@ import { z } from "zod";
 import { writeFile } from "node:fs/promises";
 import type { BusinessContext } from "../types/index.js";
 import { buildLlmsTxt } from "../generators/files/llms-txt.js";
+import { patchRobotsTxt } from "../generators/files/robots-txt.js";
 
 // Zod schema mirror of the BusinessContext TypeScript interface.
 // Kept in tools/ (not types/) to keep types/index.ts Zod-free per RESEARCH.md Pattern 3.
@@ -100,7 +101,37 @@ export function registerAllTools(server: McpServer): void {
         sitemapUrl: z.string().optional().describe("Absolute URL to sitemap.xml (e.g. 'https://example.com/sitemap.xml')"),
       },
     },
-    async () => stubResponse("configure_robots_txt", "3"),
+    async ({ robotsPath, sitemapUrl }) => {
+      try {
+        if (!robotsPath || typeof robotsPath !== 'string' || robotsPath.trim().length === 0) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: robotsPath must be a non-empty string (absolute path to robots.txt)' }],
+            isError: true,
+          };
+        }
+        const result = await patchRobotsTxt(robotsPath.trim(), sitemapUrl?.trim());
+        const parts: string[] = [];
+        if (result.botsAdded.length > 0) {
+          parts.push(`Added ${result.botsAdded.length} bot allow-rule(s): ${result.botsAdded.join(', ')}`);
+        } else {
+          parts.push('All 5 AI bot allow-rules already present — no bot changes needed');
+        }
+        if (result.sitemapAdded) {
+          parts.push(`Added Sitemap: ${sitemapUrl}`);
+        } else if (sitemapUrl) {
+          parts.push('Sitemap directive already present — no sitemap change needed');
+        }
+        return {
+          content: [{ type: 'text' as const, text: `${robotsPath.trim()} — ${parts.join('; ')}` }],
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${msg}` }],
+          isError: true,
+        };
+      }
+    },
   );
 
   // ---------- Phase 4 tools ----------
