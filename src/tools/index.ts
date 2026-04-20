@@ -12,10 +12,14 @@ import { buildLlmsTxt } from "../generators/files/llms-txt.js";
 import { patchRobotsTxt } from "../generators/files/robots-txt.js";
 import { runAudit } from "../audit/index.js";
 import { buildSitemapXml } from "../generators/files/sitemap-xml.js";
+import { buildMarkdownMirror } from "../generators/files/markdown-mirrors.js";
 import { acquireLocal } from "../acquisition/local.js";
 import { crawlUrl } from "../acquisition/crawl.js";
 import { isAcquisitionError } from "../types/index.js";
 import type { MarkdownDocument } from "../types/index.js";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
+import pLimit from "p-limit";
 
 // Zod schema mirror of the BusinessContext TypeScript interface.
 // Kept in tools/ (not types/) to keep types/index.ts Zod-free per RESEARCH.md Pattern 3.
@@ -213,7 +217,55 @@ export function registerAllTools(server: McpServer): void {
         outputDir: z.string().describe("Absolute directory where per-page /path/index.md files will be written"),
       },
     },
-    async () => stubResponse("generate_markdown_mirrors", "4"),
+    async ({ target, outputDir }) => {
+      try {
+        if (!target || typeof target !== 'string' || target.trim().length === 0) {
+          return { content: [{ type: 'text' as const, text: 'Error: target must be a non-empty string (URL or absolute local folder path)' }], isError: true };
+        }
+        if (!outputDir || typeof outputDir !== 'string' || outputDir.trim().length === 0) {
+          return { content: [{ type: 'text' as const, text: 'Error: outputDir must be a non-empty string (absolute directory where mirror files will be written)' }], isError: true };
+        }
+
+        const t = target.trim();
+        const dir = outputDir.trim();
+        const isUrl = t.startsWith('http://') || t.startsWith('https://');
+        const results = isUrl ? await crawlUrl(t) : await acquireLocal(t);
+        const docs: MarkdownDocument[] = results.filter((r): r is MarkdownDocument => !isAcquisitionError(r));
+
+        if (docs.length === 0) {
+          return { content: [{ type: 'text' as const, text: `Error: no pages acquired from ${t} — nothing to mirror` }], isError: true };
+        }
+
+        // Slug collision handling (RESEARCH.md Pitfall 3)
+        const writtenSlugs = new Set<string>();
+        const disambiguate = (slug: string): string => {
+          if (!writtenSlugs.has(slug)) { writtenSlugs.add(slug); return slug; }
+          let n = 2;
+          while (writtenSlugs.has(`${slug}-${n}`)) n++;
+          const unique = `${slug}-${n}`;
+          writtenSlugs.add(unique);
+          return unique;
+        };
+
+        const limit = pLimit(5);
+        const writes = docs.map((doc) => limit(async () => {
+          const { slug, content } = buildMarkdownMirror(doc);
+          const finalSlug = disambiguate(slug);
+          // Home page (slug === 'index') writes to outputDir/index.md — flat, not nested (Pitfall 8)
+          const filePath = finalSlug === 'index'
+            ? path.join(dir, 'index.md')
+            : path.join(dir, finalSlug, 'index.md');
+          await mkdir(path.dirname(filePath), { recursive: true });
+          await writeFile(filePath, content, 'utf-8');
+          return filePath;
+        }));
+        const written = await Promise.all(writes);
+        return { content: [{ type: 'text' as const, text: `${written.length} markdown mirror(s) written under ${dir}` }] };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: 'text' as const, text: `Error: ${msg}` }], isError: true };
+      }
+    },
   );
 
   server.registerTool(
