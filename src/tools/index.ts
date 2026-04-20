@@ -15,6 +15,7 @@ import { buildSitemapXml } from "../generators/files/sitemap-xml.js";
 import { buildMarkdownMirror } from "../generators/files/markdown-mirrors.js";
 import { buildSchemaMarkup } from "../generators/files/schema-markup.js";
 import type { FaqPair, SchemaType } from "../generators/files/schema-markup.js";
+import { buildFaqContent } from "../generators/content/faq.js";
 import { acquireLocal } from "../acquisition/local.js";
 import { crawlUrl } from "../acquisition/crawl.js";
 import { isAcquisitionError } from "../types/index.js";
@@ -320,7 +321,39 @@ export function registerAllTools(server: McpServer): void {
         count: z.number().int().min(3).max(20).optional().describe("Number of Q&A pairs to generate (default 8-10)"),
       },
     },
-    async () => stubResponse("generate_faq_content", "5"),
+    async ({ businessContext, count }) => {
+      try {
+        if (
+          !businessContext ||
+          typeof businessContext.businessName !== 'string' ||
+          businessContext.businessName.trim().length === 0
+        ) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: businessContext.businessName is required' }],
+            isError: true,
+          };
+        }
+        if (
+          typeof businessContext.businessType !== 'string' ||
+          businessContext.businessType.trim().length === 0
+        ) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: businessContext.businessType is required' }],
+            isError: true,
+          };
+        }
+        const pairs = buildFaqContent(businessContext, count);
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify(pairs, null, 2) }],
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${msg}` }],
+          isError: true,
+        };
+      }
+    },
   );
 
   // ---------- v2 tool (registered as stub per PROJECT.md v1 Active list) ----------
