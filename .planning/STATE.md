@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 3 of 6 (Core Generators) — COMPLETE
-Plan: 3 of 3 in phase (03-01 research, 03-02 llms.txt, 03-03 robots.txt — all done)
-Status: Phase 3 complete — ready for Phase 4 (sitemap + markdown mirrors)
-Last activity: 2026-04-20 — Completed 03-03 (patchRobotsTxt + configure_robots_txt handler)
+Plan: 3 of 3 in phase — all done (03-02 llms.txt, 03-03 robots.txt, 03-01 audit engine)
+Status: Phase 3 fully complete — ready for Phase 4 (sitemap + markdown mirrors)
+Last activity: 2026-04-20 — Completed 03-01 (audit_ai_seo engine: types + 5 dimensions + runAudit + handler)
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -72,10 +72,14 @@ Recent decisions affecting current work:
 - 03-03: AI_BOTS exported as `as const` readonly tuple — audit plan (03-01 Wave 3) can re-export without rename
 - 03-03: ENOENT handled inside patchRobotsTxt (auto-create); other fs errors rethrow to handler catch block
 - 03-03: No robots.txt parsing library — append-only text mutation per RESEARCH.md Pattern 4 (parse+serialize breaks round-tripping)
+- 03-01: AI_BOTS re-exported from generators/files/robots-txt.ts (not duplicated) — single source of truth for bot list
+- 03-01: Origin normalisation in runAudit — probe = new URL(target).origin so all 5 dims check root, not deep paths
+- 03-01: businessContext renamed _businessContext in handler destructuring only — public inputSchema unchanged
+- 03-01: Question-heading heuristic threshold: >=3 headings with '?' = warning (not fail)
 
 ### Pending Todos
 
-None — Phase 3 complete. Phase 4 (sitemap + markdown mirrors) is next.
+None — Phase 3 fully complete. Phase 4 (sitemap + markdown mirrors) is next.
 
 ### Blockers/Concerns
 
@@ -84,5 +88,5 @@ None — Phase 3 complete. Phase 4 (sitemap + markdown mirrors) is next.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 03-03 complete — patchRobotsTxt + AI_BOTS module + wired configure_robots_txt MCP tool handler
+Stopped at: 03-01 complete — audit_ai_seo engine: 5 dimension modules + runAudit orchestrator + tool handler wired
 Resume file: .planning/phases/04-sitemap-mirrors/ — Phase 4 plans
