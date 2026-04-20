@@ -61,12 +61,12 @@ Plans:
   2. `generate_llms_txt` produces a file with H1 site name, optional blockquote summary, and H2 section blocks per the llmstxt.org spec — populated entirely from user-provided BusinessContext, no invented content
   3. `configure_robots_txt` adds GPTBot, ClaudeBot, PerplexityBot, Google-Extended, and CCBot allow-rules and a Sitemap pointer without removing any existing rules
   4. All three tools return a descriptive error string (not a crash) when given invalid or missing input
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Audit engine (src/audit/ — AuditReport type, URL and folder auditors, per-bot robots.txt check)
-- [ ] 03-02: llms.txt generator (src/generators/files/llms-txt.ts + tool handler)
-- [ ] 03-03: robots.txt patcher (src/generators/files/robots-txt.ts + tool handler)
+- [ ] 03-01-PLAN.md — Audit engine (types + 5 dimensions + orchestrator + audit_ai_seo handler)
+- [ ] 03-02-PLAN.md — llms.txt generator (buildLlmsTxt + generate_llms_txt handler)
+- [ ] 03-03-PLAN.md — robots.txt patcher (patchRobotsTxt + configure_robots_txt handler)
 
 ### Phase 4: Sitemap, Mirrors, and Schema
 **Goal**: A user can generate an XML sitemap, a full set of markdown mirrors, and JSON-LD schema blocks for any site or folder
