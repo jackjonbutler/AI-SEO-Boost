@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 1 - Foundation (checkpoint pending)
+**Current focus:** Phase 1 - Foundation (COMPLETE — ready for Phase 2)
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation)
-Plan: 2 of 2 in current phase
-Status: Awaiting checkpoint approval (human-verify)
-Last activity: 2026-04-17 — Completed 01-02 tasks 1+2; awaiting Claude Code verification checkpoint
+Phase: 1 of 6 (Foundation) — COMPLETE
+Plan: 2 of 2 in phase (all plans complete)
+Status: Phase 1 complete — ready to begin Phase 2
+Last activity: 2026-04-17 — Completed 01-02 (checkpoint approved by user; all 8 tools verified in Claude Code CLI)
 
-Progress: [██░░░░░░░░] 18%
+Progress: [████░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -27,10 +27,10 @@ Progress: [██░░░░░░░░] 18%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation | 1 complete, 1 pending checkpoint | ~7 min | ~3.5 min |
+| 01-foundation | 2 complete | ~15 min | ~7.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 tasks (5 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (10 min including checkpoint)
 - Trend: On track
 
 *Updated after each plan completion*
@@ -53,10 +53,11 @@ Recent decisions affecting current work:
 - 01-02: McpServer instantiated at module level (not inside async main) — allows synchronous registerAllTools before transport
 - 01-02: businessContextSchema defined once in tools/index.ts, reused across 7 tools
 - 01-02: generate_location_service_pages registered as v2 stub — PROJECT.md Active list is canonical for tool count
+- 01-02: All 8 tools verified in Claude Code CLI (human-approved 2026-04-17)
 
 ### Pending Todos
 
-- Human checkpoint: verify Claude Code lists all 8 tools and a stub call returns text (see 01-02-PLAN.md checkpoint task)
+None — Phase 1 complete. Phase 2 can begin.
 
 ### Blockers/Concerns
 
@@ -66,5 +67,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: 01-02-PLAN.md checkpoint:human-verify — dist/index.js built and smoke-tested; awaiting Claude Code tool listing verification
-Resume file: .planning/phases/01-foundation/01-02-PLAN.md (checkpoint task — resume after "approved" signal)
+Stopped at: Phase 1 complete — 01-02 checkpoint approved
+Resume file: .planning/phases/ — begin Phase 2 (next plan TBD by orchestrator)
