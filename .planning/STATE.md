@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 8 — Issue Selection (v1.1)
+**Current focus:** Phase 9 — Context Accumulation (v1.1)
 
 ## Current Position
 
-Phase: 8 of 10 (Issue Selection)
+Phase: 9 of 10 (Context Accumulation)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-04-20 — Completed 08-01-PLAN.md (multi-select issue-selection elicitation)
+Last activity: 2026-04-20 — Completed 09-01-PLAN.md (context accumulator loop + TOOL_FIELD_MAP)
 
-Progress: [████████░░] 80% (8/10 phases complete — v1.0 done, Phases 7-8 done)
+Progress: [█████████░] 90% (9/10 phases complete — v1.0 done, Phases 7-9 done)
 
 ## Performance Metrics
 
@@ -57,6 +57,11 @@ Recent decisions affecting v1.1 work:
 - Phase 8: dimension:status composite keys used for multi-select const values — stable for v1 (one finding per dimension)
 - Phase 8: no try/catch around second elicitInput — errors propagate to outer catch (returns isError:true)
 - Phase 8: Phase 9 input contract: {marker, selectedFindings, businessContext} — Phase 9 starts at the final return in the if (useWizard) branch
+- Phase 9: TOOL_FIELD_MAP static constant at module scope maps 5 fixing tools to contextRequired/contextOptional/toolRequired/toolOptional field lists
+- Phase 9: AccumulatedContext = Partial<BusinessContext> & WizardToolFields — unified accumulator type
+- Phase 9: Only contextRequired fields asked in gap-fill (not contextOptional) — optional fields not gathered during Phase 9
+- Phase 9: as any cast used for dynamically-built gap-fill properties object (SDK PrimitiveSchemaDefinitionSchema union incompatible with Record<string, unknown>)
+- Phase 9: Phase 10 input contract: {marker, selectedFindings, skippedFindings, accumulatedContext, contextSummary} — Phase 10 replaces Phase 9 final return and calls generator functions directly
 
 ### Pending Todos
 
@@ -69,6 +74,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: Phase 8 complete — 08-01 (multi-select issue-selection elicitation) executed and committed
-Resume file: .planning/phases/08-issue-selection/08-01-SUMMARY.md
-Next: Phase 9 — Fix Generation (consume selectedFindings + businessContext in the if (useWizard) branch to drive sequential fix tools)
+Stopped at: Phase 9 complete — 09-01 (context accumulator loop + TOOL_FIELD_MAP + Scenarios G/H/I) executed and committed
+Resume file: .planning/phases/09-context-accumulation/09-01-SUMMARY.md
+Next: Phase 10 — Apply Fixes (replace Phase 9 final return with sequential direct calls to generator functions using accumulatedContext)
