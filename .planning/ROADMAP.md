@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - MCP server wired on stdio with shared types and error policy in place
 - [x] **Phase 2: Acquisition Pipeline** - Local folder traversal and live URL crawl with HTML processing shared by all generators
 - [x] **Phase 3: Core Generators** - Audit, llms.txt, and robots.txt — the entry point and signature features
-- [ ] **Phase 4: Sitemap, Mirrors, and Schema** - URL-based sitemap, markdown mirrors, and standalone JSON-LD schema markup
+- [x] **Phase 4: Sitemap, Mirrors, and Schema** - URL-based sitemap, markdown mirrors, and standalone JSON-LD schema markup
 - [ ] **Phase 5: FAQ Content** - AI-quotable FAQ generator that feeds schema and enriches business profiles
 - [ ] **Phase 6: Distribution** - README, Claude Desktop config snippet, and tool documentation
 
@@ -121,6 +121,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation | 2/2 | Complete | 2026-04-20 |
 | 2. Acquisition Pipeline | 2/2 | Complete | 2026-04-20 |
 | 3. Core Generators | 3/3 | Complete | 2026-04-20 |
-| 4. Sitemap, Mirrors, and Schema | 0/3 | Not started | - |
+| 4. Sitemap, Mirrors, and Schema | 3/3 | Complete | 2026-04-20 |
 | 5. FAQ Content | 0/1 | Not started | - |
 | 6. Distribution | 0/1 | Not started | - |

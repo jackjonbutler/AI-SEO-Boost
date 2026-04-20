@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 2 - Acquisition Pipeline (COMPLETE — ready for Phase 3)
+**Current focus:** Phase 4 - Sitemap, Mirrors, and Schema (COMPLETE — ready for Phase 5)
 
 ## Current Position
 
