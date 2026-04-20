@@ -36,6 +36,65 @@ const businessContextSchema = z.object({
   description: z.string().optional().describe("1-3 sentence business description"),
 }).describe("Shared business details used across tools");
 
+// ---------------------------------------------------------------------------
+// Phase 9: Context accumulation types and tool-to-field map
+// ---------------------------------------------------------------------------
+
+/** Tool-specific fields gathered mid-wizard that are not part of BusinessContext. */
+type WizardToolFields = {
+  outputPath?: string;       // generate_llms_txt
+  robotsPath?: string;       // configure_robots_txt
+  sitemapUrl?: string;       // configure_robots_txt (optional)
+  schemaTypes?: string[];    // generate_schema_markup
+  outputDir?: string;        // generate_markdown_mirrors
+};
+
+/** Merged accumulator type: all BusinessContext fields + tool-specific wizard fields. */
+type AccumulatedContext = Partial<BusinessContext> & WizardToolFields;
+
+/**
+ * Static mapping from each suggestedToolCall to the exact fields that tool requires.
+ * Drives the Phase 9 gap-fill loop without runtime introspection.
+ * Source: derived from inputSchemas defined below + audit/dimensions/* suggestedToolCall values.
+ */
+const TOOL_FIELD_MAP: Record<string, {
+  contextRequired: (keyof BusinessContext)[];
+  contextOptional: (keyof BusinessContext)[];
+  toolRequired: (keyof WizardToolFields)[];
+  toolOptional: (keyof WizardToolFields)[];
+}> = {
+  generate_llms_txt: {
+    contextRequired: ['businessName', 'businessType'],
+    contextOptional: ['location', 'services', 'website', 'phoneNumber', 'description'],
+    toolRequired: ['outputPath'],
+    toolOptional: [],
+  },
+  configure_robots_txt: {
+    contextRequired: [],
+    contextOptional: [],
+    toolRequired: ['robotsPath'],
+    toolOptional: ['sitemapUrl'],
+  },
+  generate_schema_markup: {
+    contextRequired: ['businessName', 'businessType'],
+    contextOptional: ['location', 'services', 'website', 'phoneNumber', 'description'],
+    toolRequired: ['schemaTypes'],
+    toolOptional: [],
+  },
+  generate_faq_content: {
+    contextRequired: ['businessName', 'businessType'],
+    contextOptional: ['location', 'services', 'website', 'phoneNumber', 'description'],
+    toolRequired: [],
+    toolOptional: [],
+  },
+  generate_markdown_mirrors: {
+    contextRequired: [],
+    contextOptional: [],
+    toolRequired: ['outputDir'],
+    toolOptional: [],
+  },
+};
+
 // Stub handler factory — returns a valid MCP response marking the tool as
 // registered-but-not-implemented. Phases 2-5 replace these bodies.
 function stubResponse(toolName: string, phase: string) {
@@ -171,18 +230,147 @@ export function registerAllTools(server: McpServer): void {
           };
         }
 
-        // Filter findings to the user's selection and hand off to Phase 9.
+        // Filter findings to the user's selection.
         const selectedFindings = actionableFindings.filter(
           (f) => selectedKeys.includes(`${f.dimension}:${f.status}`),
         );
 
+        // -----------------------------------------------------------------
+        // Phase 9: Context accumulation loop
+        // Seed from upfront businessContext (CTX-01), then gather only
+        // missing required fields per tool (CTX-02), carrying answers
+        // forward so no field is ever asked twice (CTX-03).
+        // -----------------------------------------------------------------
+
+        // Step 1: Seed accumulator from upfront businessContext (CTX-01)
+        const acc: AccumulatedContext = { ...businessContext ?? {} };
+        const skippedFindings: string[] = [];
+
+        // Step 2: Loop over selected findings in severity order (already sorted by runAudit)
+        for (const finding of selectedFindings) {
+          // Guard: findings without a known fixing tool are skipped silently (Pitfall 4)
+          const toolName = finding.suggestedToolCall;
+          if (!toolName || !TOOL_FIELD_MAP[toolName]) continue;
+
+          const fieldSpec = TOOL_FIELD_MAP[toolName];
+
+          // Compute which required fields are missing from acc
+          const missingContextRequired = fieldSpec.contextRequired.filter(
+            (f) => acc[f] === undefined,
+          );
+          const missingToolRequired = fieldSpec.toolRequired.filter(
+            (f) => (acc as Record<string, unknown>)[f] === undefined,
+          );
+          const allMissing = [...missingContextRequired, ...missingToolRequired];
+
+          // If all required fields are already present — no elicitation needed (CTX-01, CTX-03)
+          if (allMissing.length === 0) continue;
+
+          // Build the gap-fill elicitation schema for this tool's missing fields
+          const properties: Record<string, unknown> = {};
+          const required: string[] = [];
+
+          for (const field of allMissing) {
+            required.push(field);
+            switch (field) {
+              case 'businessName':
+                properties[field] = { type: 'string', title: 'Business name', description: 'Your business name as it should appear in generated files' };
+                break;
+              case 'businessType':
+                properties[field] = { type: 'string', title: 'Business type', description: "Type of business (e.g. 'vehicle wrap shop', 'law firm')" };
+                break;
+              case 'location':
+                properties[field] = { type: 'string', title: 'Location', description: "Primary service area (e.g. 'Denver, CO')" };
+                break;
+              case 'services':
+                properties[field] = { type: 'string', title: 'Services', description: "Comma-separated list of services (e.g. 'Vehicle wraps, Fleet graphics')" };
+                break;
+              case 'website':
+                properties[field] = { type: 'string', title: 'Website URL', description: "Your canonical website URL (e.g. 'https://example.com')" };
+                break;
+              case 'phoneNumber':
+                properties[field] = { type: 'string', title: 'Phone number', description: 'Contact phone number' };
+                break;
+              case 'description':
+                properties[field] = { type: 'string', title: 'Business description', description: '1-3 sentence description of your business' };
+                break;
+              case 'outputPath':
+                properties[field] = { type: 'string', title: 'Output path for llms.txt', description: 'Absolute path where llms.txt should be written (e.g. /home/user/site/llms.txt)' };
+                break;
+              case 'robotsPath':
+                properties[field] = { type: 'string', title: 'Path to robots.txt', description: 'Absolute path to robots.txt (will be created if missing)' };
+                break;
+              case 'sitemapUrl':
+                properties[field] = { type: 'string', title: 'Sitemap URL (optional)', description: "Absolute URL to sitemap.xml (e.g. 'https://example.com/sitemap.xml')" };
+                // sitemapUrl is optional — remove from required (Pitfall note: we pushed it above, pop it)
+                required.pop();
+                break;
+              case 'schemaTypes':
+                properties[field] = {
+                  type: 'array',
+                  title: 'Schema types to generate',
+                  items: { anyOf: [
+                    { const: 'LocalBusiness', title: 'LocalBusiness (recommended)' },
+                    { const: 'FAQPage', title: 'FAQPage' },
+                    { const: 'Service', title: 'Service' },
+                  ]},
+                  default: ['LocalBusiness'],
+                };
+                break;
+              case 'outputDir':
+                properties[field] = { type: 'string', title: 'Output directory for markdown mirrors', description: 'Absolute path to the directory where per-page index.md files will be written' };
+                break;
+            }
+          }
+
+          const gapResult = await server.server.elicitInput({
+            mode: 'form',
+            message: `To fix "${finding.dimension}" (${finding.severity}), I need a few more details:`,
+            requestedSchema: {
+              type: 'object',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              properties: properties as any,
+              required,
+            },
+          });
+
+          // User cancelled gap-fill for this tool — skip it, continue to others (Pitfall 5)
+          if (gapResult.action !== 'accept') {
+            skippedFindings.push(finding.dimension);
+            continue;
+          }
+
+          // Merge gap-fill response into accumulator
+          Object.assign(acc, gapResult.content);
+
+          // Post-process: split services string into array (Pitfall 2)
+          if (typeof acc.services === 'string') {
+            acc.services = (acc.services as string).split(',').map((s) => s.trim()).filter(Boolean);
+          }
+          // Post-process: cast schemaTypes to string[] if needed (Pitfall 3)
+          if (acc.schemaTypes !== undefined && !Array.isArray(acc.schemaTypes)) {
+            acc.schemaTypes = [String(acc.schemaTypes)];
+          }
+        }
+
+        // Step 3: Build contextSummary (success criterion 4 — visible/traceable state)
+        const contextLines = Object.entries(acc)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => `- ${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`);
+        const contextSummary = contextLines.length > 0
+          ? `Context gathered:\n${contextLines.join('\n')}`
+          : 'No context gathered (all tools operate without business details)';
+
+        // Step 4: Return Phase 9 envelope for Phase 10
         return {
           content: [{
             type: 'text' as const,
             text: JSON.stringify({
-              marker: '[wizard] Issue selection complete — fix generation lands in Phase 9',
+              marker: '[wizard] Context accumulation complete — tool execution lands in Phase 10',
               selectedFindings,
-              businessContext: businessContext ?? null,
+              skippedFindings,
+              accumulatedContext: acc,
+              contextSummary,
             }, null, 2),
           }],
         };
