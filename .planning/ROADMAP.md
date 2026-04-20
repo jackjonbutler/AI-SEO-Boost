@@ -77,12 +77,12 @@ Plans:
   2. `generate_markdown_mirrors` writes one index.md per page with YAML frontmatter and all navigation/script chrome removed
   3. `generate_schema_markup` outputs valid JSON-LD for LocalBusiness, FAQPage, and Service types using https://schema.org context — output passes schema.org validator
   4. All three tools work from both a local folder and a live URL
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Sitemap generator (src/generators/files/sitemap.ts + tool handler)
-- [ ] 04-02: Markdown mirrors generator (src/generators/files/markdown-mirrors.ts + tool handler)
-- [ ] 04-03: Schema markup generator (src/generators/content/schema-markup.ts + tool handler)
+- [ ] 04-01-PLAN.md — Sitemap generator (buildSitemapXml + generate_sitemap handler)
+- [ ] 04-02-PLAN.md — Markdown mirrors generator (buildMarkdownMirror + generate_markdown_mirrors handler)
+- [ ] 04-03-PLAN.md — Schema markup generator (buildSchemaMarkup + generate_schema_markup handler)
 
 ### Phase 5: FAQ Content
 **Goal**: A user can generate AI-quotable FAQ content from business details that can feed into schema markup or be published directly
