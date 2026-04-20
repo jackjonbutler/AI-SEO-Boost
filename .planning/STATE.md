@@ -5,21 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Planning v1.2 — Audit Observability & Framework Awareness
+**Current focus:** v1.2 — Audit Observability & Framework Awareness — Phase 11 next
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements for v1.2
-Last activity: 2026-04-20 — Milestone v1.2 started
+Phase: 11 — HTTP Diagnostic Metadata Capture
+Plan: — (not started)
+Status: Roadmap defined — ready for Phase 11 planning
+Last activity: 2026-04-20 — v1.2 roadmap created (Phases 11–15)
+
+Progress: [░░░░░░░░░░░░░░░] 0/5 phases complete
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12 (all v1.0 plans)
+- Total plans completed: 17 (12 v1.0 + 5 v1.1)
 - Average duration: ~5–8 min/plan
-- Total execution time: ~3 days (v1.0)
+- Total execution time: ~3 days (v1.0) + 1 day (v1.1)
 
 **By Phase:**
 
@@ -31,9 +33,13 @@ Last activity: 2026-04-20 — Milestone v1.2 started
 | 04-sitemap-mirrors-schema | 3 | ~18 min | ~6 min |
 | 05-faq-content | 1 | ~5 min | ~5 min |
 | 06-distribution | 1 | ~5 min | ~5 min |
+| 07-wizard-entry-point | 1 | ~8 min | ~8 min |
+| 08-issue-selection | 1 | ~8 min | ~8 min |
+| 09-context-accumulation | 1 | ~10 min | ~10 min |
+| 10-tool-execution-engine | 2 | ~12 min | ~6 min |
 
 **Recent Trend:**
-- Trend: Stable — v1.0 delivered on schedule
+- Trend: Stable — v1.1 delivered in single day
 
 *Updated after each plan completion*
 
@@ -42,7 +48,7 @@ Last activity: 2026-04-20 — Milestone v1.2 started
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting v1.1 work:
+Recent decisions affecting v1.2 work:
 
 - v1.0: Generator pattern — pure build<Name>() functions, no I/O (carry forward to wizard helpers)
 - v1.0: All tools registered in tools/index.ts via registerAllTools (wizard routing reads same registry)
@@ -67,6 +73,17 @@ Recent decisions affecting v1.1 work:
 - Phase 10 smoke test: per-tool confirmation detection (message.includes('Fix applied:')) as first branch in elicitation handlers — prevents callCount miscount after Phase 10 adds non-gap-fill elicitation calls
 - Phase 10 smoke test: each scenario prints its own SMOKE OK line for per-scenario visibility
 
+### v1.2 Architecture Notes (from research)
+
+- All 13 v1.2 requirements are implementable with zero new npm dependencies
+- New files: src/audit/framework.ts (detectFramework()), src/audit/schema-type-map.ts (inferSchemaType())
+- Modified files: src/audit/types.ts, src/acquisition/crawl.ts, src/audit/index.ts, src/audit/dimensions/markdown.ts, src/audit/dimensions/llms-txt.ts, src/audit/dimensions/robots-txt.ts, src/tools/index.ts
+- All new fields on AuditFinding and AuditReport are optional — zero breaking changes to wizard
+- Phase 11 is types-first — every other phase depends on new fields being declared in types.ts
+- Phase 15 type narrowing (WIZ-01) must come after all phases that introduce suggestedToolCall values are stable
+- Research flag: verify cheerio xmlMode:true for sitemap XML against cheerio 1.2.0 before Phase 14
+- Research flag: verify accumulator seeding order in tools/index.ts ~line 264 before Phase 15
+
 ### Pending Todos
 
 None.
@@ -78,5 +95,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: v1.1 milestone archived — planning v1.2
-Next: `/gsd:new-milestone` to define v1.2 Audit Observability & Framework Awareness requirements and roadmap
+Stopped at: v1.2 roadmap created — Phases 11–15 defined
+Next: `/gsd:plan-phase 11` — HTTP Diagnostic Metadata Capture
