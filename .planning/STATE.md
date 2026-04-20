@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation) — COMPLETE
-Plan: 2 of 2 in phase (all plans complete)
-Status: Phase 1 complete — ready to begin Phase 2
-Last activity: 2026-04-17 — Completed 01-02 (checkpoint approved by user; all 8 tools verified in Claude Code CLI)
+Phase: 2 of 6 (Acquisition Pipeline) — In progress
+Plan: 1 of N in phase (02-01 complete)
+Status: In progress — 02-01 complete, ready for 02-02
+Last activity: 2026-04-20 — Completed 02-01 (local acquisition pipeline: types, strip, convert, acquireLocal)
 
 Progress: [████░░░░░░] 33%
 
@@ -54,10 +54,15 @@ Recent decisions affecting current work:
 - 01-02: businessContextSchema defined once in tools/index.ts, reused across 7 tools
 - 01-02: generate_location_service_pages registered as v2 stub — PROJECT.md Active list is canonical for tool count
 - 01-02: All 8 tools verified in Claude Code CLI (human-approved 2026-04-17)
+- 02-01: p-limit pinned at @6 (not @7) — v7 requires Node 20, project engines.node >=18
+- 02-01: No @types/cheerio — cheerio 1.x ships native TypeScript types
+- 02-01: TurndownService singleton at module level — stateless after construction, safe to reuse
+- 02-01: readdir recursive:true without withFileTypes — avoids Node 18.17-18.18 silent entry-drop bug
+- 02-01: acquireLocal never-throw pattern — per-file errors become AcquisitionError, not exceptions
 
 ### Pending Todos
 
-None — Phase 1 complete. Phase 2 can begin.
+None — 02-01 complete. 02-02 (web crawl acquisition) can begin.
 
 ### Blockers/Concerns
 
@@ -66,6 +71,6 @@ None — Phase 1 complete. Phase 2 can begin.
 
 ## Session Continuity
 
-Last session: 2026-04-17
-Stopped at: Phase 1 complete — 01-02 checkpoint approved
-Resume file: .planning/phases/ — begin Phase 2 (next plan TBD by orchestrator)
+Last session: 2026-04-20
+Stopped at: 02-01 complete — local acquisition pipeline built and verified
+Resume file: .planning/phases/02-acquisition-pipeline/ — begin 02-02
