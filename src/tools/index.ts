@@ -6,7 +6,9 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { writeFile } from "node:fs/promises";
 import type { BusinessContext } from "../types/index.js";
+import { buildLlmsTxt } from "../generators/files/llms-txt.js";
 
 // Zod schema mirror of the BusinessContext TypeScript interface.
 // Kept in tools/ (not types/) to keep types/index.ts Zod-free per RESEARCH.md Pattern 3.
@@ -59,7 +61,33 @@ export function registerAllTools(server: McpServer): void {
         outputPath: z.string().describe("Absolute path where llms.txt should be written"),
       },
     },
-    async () => stubResponse("generate_llms_txt", "3"),
+    async ({ businessContext, outputPath }) => {
+      try {
+        if (!outputPath || typeof outputPath !== 'string' || outputPath.trim().length === 0) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: outputPath must be a non-empty string (absolute path where llms.txt should be written)' }],
+            isError: true,
+          };
+        }
+        if (!businessContext || typeof businessContext.businessName !== 'string' || businessContext.businessName.trim().length === 0) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: businessContext.businessName is required' }],
+            isError: true,
+          };
+        }
+        const content = buildLlmsTxt(businessContext);
+        await writeFile(outputPath.trim(), content, 'utf-8');
+        return {
+          content: [{ type: 'text' as const, text: `llms.txt written to ${outputPath.trim()} (${content.length} bytes)` }],
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${msg}` }],
+          isError: true,
+        };
+      }
+    },
   );
 
   server.registerTool(
