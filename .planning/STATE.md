@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** Phase 9 — Context Accumulation (v1.1)
+**Current focus:** Phase 10 — Tool Execution Engine (v1.1) — COMPLETE
 
 ## Current Position
 
-Phase: 9 of 10 (Context Accumulation)
+Phase: 10 of 10 (Tool Execution Engine)
 Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-04-20 — Completed 09-01-PLAN.md (context accumulator loop + TOOL_FIELD_MAP)
+Status: Phase complete — ALL PHASES COMPLETE
+Last activity: 2026-04-20 — Completed 10-01-PLAN.md (Phase 10 execution loop — wizard end-to-end)
 
-Progress: [█████████░] 90% (9/10 phases complete — v1.0 done, Phases 7-9 done)
+Progress: [██████████] 100% (10/10 phases complete — v1.1 wizard fully delivered)
 
 ## Performance Metrics
 
@@ -62,6 +62,10 @@ Recent decisions affecting v1.1 work:
 - Phase 9: Only contextRequired fields asked in gap-fill (not contextOptional) — optional fields not gathered during Phase 9
 - Phase 9: as any cast used for dynamically-built gap-fill properties object (SDK PrimitiveSchemaDefinitionSchema union incompatible with Record<string, unknown>)
 - Phase 9: Phase 10 input contract: {marker, selectedFindings, skippedFindings, accumulatedContext, contextSummary} — Phase 10 replaces Phase 9 final return and calls generator functions directly
+- Phase 10: Wizard execution loop: for...of selectedFindings + switch on suggestedToolCall + try/catch per case + fixResults/fixErrors accumulators + per-tool elicitInput acknowledgment (non-blocking) + session summary return
+- Phase 10: patchRobotsTxt handles own I/O — no subsequent writeFile call in wizard path
+- Phase 10: generate_schema_markup and generate_faq_content return text only (no file write) — user copies output
+- Phase 10: generate_markdown_mirrors re-crawls target from outer closure (Phase 9 envelope did not include docs)
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: Phase 9 complete — 09-01 (context accumulator loop + TOOL_FIELD_MAP + Scenarios G/H/I) executed and committed
-Resume file: .planning/phases/09-context-accumulation/09-01-SUMMARY.md
-Next: Phase 10 — Apply Fixes (replace Phase 9 final return with sequential direct calls to generator functions using accumulatedContext)
+Stopped at: Phase 10 complete — 10-01 (Phase 10 execution loop — wizard end-to-end) executed and committed
+Resume file: .planning/phases/10-tool-execution-engine/10-01-SUMMARY.md
+Next: All phases complete. v1.1 wizard feature fully delivered. Consider end-to-end smoke test update for Phases 10 execution scenarios.
