@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 3 of 6 (Core Generators) — In progress
-Plan: 2 of 3 in phase (03-01 research, 03-02 complete; 03-03 next)
-Status: In progress — 03-02 (generate_llms_txt) complete
-Last activity: 2026-04-20 — Completed 03-02 (buildLlmsTxt pure function + wired MCP tool handler)
+Phase: 3 of 6 (Core Generators) — COMPLETE
+Plan: 3 of 3 in phase (03-01 research, 03-02 llms.txt, 03-03 robots.txt — all done)
+Status: Phase 3 complete — ready for Phase 4 (sitemap + markdown mirrors)
+Last activity: 2026-04-20 — Completed 03-03 (patchRobotsTxt + configure_robots_txt handler)
 
-Progress: [██████░░░░] 60%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -69,10 +69,13 @@ Recent decisions affecting current work:
 - 03-02: POSIX newline: trimEnd() + '\n' — no trailing blank lines, exactly one trailing newline
 - 03-02: No About/Pricing sections in v1 — no corresponding BusinessContext fields
 - 03-02: writeFile import already present in tools/index.ts — 03-03 can reuse without duplication
+- 03-03: AI_BOTS exported as `as const` readonly tuple — audit plan (03-01 Wave 3) can re-export without rename
+- 03-03: ENOENT handled inside patchRobotsTxt (auto-create); other fs errors rethrow to handler catch block
+- 03-03: No robots.txt parsing library — append-only text mutation per RESEARCH.md Pattern 4 (parse+serialize breaks round-tripping)
 
 ### Pending Todos
 
-None — 03-02 complete. 03-03 (configure_robots_txt) is next.
+None — Phase 3 complete. Phase 4 (sitemap + markdown mirrors) is next.
 
 ### Blockers/Concerns
 
@@ -81,5 +84,5 @@ None — 03-02 complete. 03-03 (configure_robots_txt) is next.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 03-02 complete — buildLlmsTxt pure function + wired generate_llms_txt MCP tool handler
-Resume file: .planning/phases/03-core-generators/03-03-PLAN.md — configure_robots_txt handler
+Stopped at: 03-03 complete — patchRobotsTxt + AI_BOTS module + wired configure_robots_txt MCP tool handler
+Resume file: .planning/phases/04-sitemap-mirrors/ — Phase 4 plans
