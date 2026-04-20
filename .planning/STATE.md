@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 2 of 6 (Acquisition Pipeline) — COMPLETE
-Plan: 2 of 2 in phase (02-01 and 02-02 complete)
-Status: Phase 2 complete — ready for Phase 3 (content generators)
-Last activity: 2026-04-20 — Completed 02-02 (crawlUrl BFS acquisition, full Phase 2 pipeline verified)
+Phase: 3 of 6 (Core Generators) — In progress
+Plan: 2 of 3 in phase (03-01 research, 03-02 complete; 03-03 next)
+Status: In progress — 03-02 (generate_llms_txt) complete
+Last activity: 2026-04-20 — Completed 03-02 (buildLlmsTxt pure function + wired MCP tool handler)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -64,18 +64,22 @@ Recent decisions affecting current work:
 - 02-02: Link discovery on raw HTML before stripChrome — nav/header have richest internal link sets
 - 02-02: hostname comparison for same-domain (not string prefix) — prevents subdomain spoofing
 - 02-02: No iconv-lite in v1 — UTF-8 only, documented limitation
+- 03-02: Generator pattern: src/generators/files/<name>.ts exports pure build<Name>(ctx) function — no I/O
+- 03-02: Section order Services → Locations → Contact (llmstxt.org spec verified); empty sections forbidden
+- 03-02: POSIX newline: trimEnd() + '\n' — no trailing blank lines, exactly one trailing newline
+- 03-02: No About/Pricing sections in v1 — no corresponding BusinessContext fields
+- 03-02: writeFile import already present in tools/index.ts — 03-03 can reuse without duplication
 
 ### Pending Todos
 
-None — Phase 2 complete. Phase 3 (content generators) can begin.
+None — 03-02 complete. 03-03 (configure_robots_txt) is next.
 
 ### Blockers/Concerns
 
-- Phase 3: llms.txt spec compliance is LOW confidence in training data. Verify current required structure at llmstxt.org before implementing generate_llms_txt.
-- Phase 2: Decide upfront whether to add iconv-lite for charset detection or document UTF-8-only as v1 limitation.
+- Phase 2: Decide upfront whether to add iconv-lite for charset detection or document UTF-8-only as v1 limitation (carried forward, not blocking Phase 3).
 
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: 02-02 complete — full acquisition pipeline (local + crawl) built and verified
-Resume file: .planning/phases/03-content-generators/ — begin Phase 3
+Stopped at: 03-02 complete — buildLlmsTxt pure function + wired generate_llms_txt MCP tool handler
+Resume file: .planning/phases/03-core-generators/03-03-PLAN.md — configure_robots_txt handler
