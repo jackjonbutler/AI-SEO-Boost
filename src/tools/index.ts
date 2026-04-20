@@ -361,18 +361,203 @@ export function registerAllTools(server: McpServer): void {
           ? `Context gathered:\n${contextLines.join('\n')}`
           : 'No context gathered (all tools operate without business details)';
 
-        // Step 4: Return Phase 9 envelope for Phase 10
+        // Step 4 (Phase 10): Sequential execution loop
+        const fixResults: string[] = [];
+        const fixErrors: string[] = [];
+
+        for (const finding of selectedFindings) {
+          if (skippedFindings.includes(finding.dimension)) continue;
+          const toolName = finding.suggestedToolCall;
+          if (!toolName || !TOOL_FIELD_MAP[toolName]) continue;
+
+          switch (toolName) {
+            case 'generate_llms_txt': {
+              try {
+                const ctx = acc as BusinessContext;
+                const content = buildLlmsTxt(ctx);
+                await writeFile(acc.outputPath!, content, 'utf-8');
+                fixResults.push('llms.txt written to ' + acc.outputPath + ' (' + content.length + ' bytes)');
+                try {
+                  await server.server.elicitInput({
+                    mode: 'form',
+                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                    requestedSchema: {
+                      type: 'object',
+                      properties: {
+                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                      },
+                      required: ['acknowledged'],
+                    },
+                  });
+                } catch {
+                  // Non-elicitation client — silently continue
+                }
+              } catch (toolErr) {
+                fixErrors.push('generate_llms_txt: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
+              }
+              break;
+            }
+
+            case 'configure_robots_txt': {
+              try {
+                const result = await patchRobotsTxt(acc.robotsPath!, acc.sitemapUrl);
+                const parts: string[] = [];
+                if (result.botsAdded.length > 0) {
+                  parts.push('Added ' + result.botsAdded.length + ' bot allow-rule(s): ' + result.botsAdded.join(', '));
+                } else {
+                  parts.push('All AI bot allow-rules already present');
+                }
+                if (result.sitemapAdded) {
+                  parts.push('Added Sitemap: ' + acc.sitemapUrl);
+                }
+                fixResults.push('robots.txt — ' + parts.join('; '));
+                try {
+                  await server.server.elicitInput({
+                    mode: 'form',
+                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                    requestedSchema: {
+                      type: 'object',
+                      properties: {
+                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                      },
+                      required: ['acknowledged'],
+                    },
+                  });
+                } catch {
+                  // Non-elicitation client — silently continue
+                }
+              } catch (toolErr) {
+                fixErrors.push('configure_robots_txt: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
+              }
+              break;
+            }
+
+            case 'generate_schema_markup': {
+              try {
+                const ctx = acc as BusinessContext;
+                const blocks = buildSchemaMarkup(ctx, acc.schemaTypes as SchemaType[]);
+                fixResults.push('schema markup generated (' + blocks.length + ' block(s) — copy JSON-LD into <head>):\n' + blocks.join('\n\n'));
+                try {
+                  await server.server.elicitInput({
+                    mode: 'form',
+                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                    requestedSchema: {
+                      type: 'object',
+                      properties: {
+                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                      },
+                      required: ['acknowledged'],
+                    },
+                  });
+                } catch {
+                  // Non-elicitation client — silently continue
+                }
+              } catch (toolErr) {
+                fixErrors.push('generate_schema_markup: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
+              }
+              break;
+            }
+
+            case 'generate_faq_content': {
+              try {
+                const ctx = acc as BusinessContext;
+                const pairs = buildFaqContent(ctx);
+                fixResults.push('FAQ content generated (' + pairs.length + ' pairs):\n' + JSON.stringify(pairs, null, 2));
+                try {
+                  await server.server.elicitInput({
+                    mode: 'form',
+                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                    requestedSchema: {
+                      type: 'object',
+                      properties: {
+                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                      },
+                      required: ['acknowledged'],
+                    },
+                  });
+                } catch {
+                  // Non-elicitation client — silently continue
+                }
+              } catch (toolErr) {
+                fixErrors.push('generate_faq_content: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
+              }
+              break;
+            }
+
+            case 'generate_markdown_mirrors': {
+              try {
+                const t = target.trim();
+                const isUrl = t.startsWith('http://') || t.startsWith('https://');
+                const results = isUrl ? await crawlUrl(t) : await acquireLocal(t);
+                const docs: MarkdownDocument[] = results.filter((r): r is MarkdownDocument => !isAcquisitionError(r));
+                if (docs.length === 0) {
+                  fixErrors.push('generate_markdown_mirrors: no pages acquired from ' + t);
+                  break;
+                }
+                const dir = acc.outputDir!;
+                const writtenSlugs = new Set<string>();
+                const disambiguate = (slug: string): string => {
+                  if (!writtenSlugs.has(slug)) { writtenSlugs.add(slug); return slug; }
+                  let n = 2;
+                  while (writtenSlugs.has(`${slug}-${n}`)) n++;
+                  const unique = `${slug}-${n}`;
+                  writtenSlugs.add(unique);
+                  return unique;
+                };
+                const limit = pLimit(5);
+                const writes = docs.map((doc) => limit(async () => {
+                  const { slug, content } = buildMarkdownMirror(doc);
+                  const finalSlug = disambiguate(slug);
+                  const filePath = finalSlug === 'index'
+                    ? path.join(dir, 'index.md')
+                    : path.join(dir, finalSlug, 'index.md');
+                  await mkdir(path.dirname(filePath), { recursive: true });
+                  await writeFile(filePath, content, 'utf-8');
+                  return filePath;
+                }));
+                const written = await Promise.all(writes);
+                fixResults.push(written.length + ' markdown mirror(s) written under ' + acc.outputDir!);
+                try {
+                  await server.server.elicitInput({
+                    mode: 'form',
+                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                    requestedSchema: {
+                      type: 'object',
+                      properties: {
+                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                      },
+                      required: ['acknowledged'],
+                    },
+                  });
+                } catch {
+                  // Non-elicitation client — silently continue
+                }
+              } catch (toolErr) {
+                fixErrors.push('generate_markdown_mirrors: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
+              }
+              break;
+            }
+          }
+        }
+
+        // Step 5: Session summary return
+        const summaryLines: string[] = [
+          'Wizard complete. ' + fixResults.length + ' fix(es) applied.',
+        ];
+        if (fixResults.length > 0) {
+          summaryLines.push('', 'Applied:');
+          summaryLines.push(...fixResults.map((r) => '  - ' + r));
+        }
+        if (fixErrors.length > 0) {
+          summaryLines.push('', 'Errors:');
+          summaryLines.push(...fixErrors.map((e) => '  - ' + e));
+        }
+        if (skippedFindings.length > 0) {
+          summaryLines.push('', 'Skipped (gap-fill cancelled):');
+          summaryLines.push(...skippedFindings.map((d) => '  - ' + d));
+        }
         return {
-          content: [{
-            type: 'text' as const,
-            text: JSON.stringify({
-              marker: '[wizard] Context accumulation complete — tool execution lands in Phase 10',
-              selectedFindings,
-              skippedFindings,
-              accumulatedContext: acc,
-              contextSummary,
-            }, null, 2),
-          }],
+          content: [{ type: 'text' as const, text: summaryLines.join('\n') }],
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
