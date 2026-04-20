@@ -56,13 +56,13 @@ export function registerAllTools(server: McpServer): void {
     "audit_ai_seo",
     {
       description:
-        "Audit a website or local folder across 5 AI SEO dimensions (llms.txt, schema, robots.txt AI access, FAQ blocks, markdown mirrors). Returns a prioritized fix list with suggested tool calls.",
+        "Audit a website or local folder across 5 AI SEO dimensions (llms.txt, schema, robots.txt AI access, FAQ blocks, markdown mirrors). After auditing, prompts the user to choose between a detailed JSON report or the interactive fix wizard. Returns the detailed report when the wizard is declined or the client does not support MCP elicitation.",
       inputSchema: {
         target: z.string().describe("URL to crawl (https://...) or absolute local folder path to walk"),
-        businessContext: businessContextSchema,
+        businessContext: businessContextSchema.optional(),
       },
     },
-    async ({ target, businessContext: _businessContext }) => {
+    async ({ target, businessContext }) => {
       try {
         if (!target || typeof target !== 'string' || target.trim().length === 0) {
           return {
@@ -71,8 +71,52 @@ export function registerAllTools(server: McpServer): void {
           };
         }
         const report = await runAudit(target.trim());
+
+        // WIZ-01: Post-audit fork via MCP elicitation.
+        // If the client supports elicitation, ask the user to pick a mode.
+        // If it doesn't (older Claude Code, non-elicitation client), elicitInput
+        // throws and we fall through to the pre-v1.1 detailed-report response.
+        let useWizard = false;
+        try {
+          const fork = await server.server.elicitInput({
+            mode: 'form',
+            message: 'Audit complete. How would you like to proceed?',
+            requestedSchema: {
+              type: 'object',
+              properties: {
+                mode: {
+                  type: 'string',
+                  title: 'Next step',
+                  oneOf: [
+                    { const: 'report', title: 'Detailed report' },
+                    { const: 'wizard', title: 'Fix with wizard' },
+                  ],
+                },
+              },
+              required: ['mode'],
+            },
+          });
+          useWizard = fork.action === 'accept' && fork.content?.mode === 'wizard';
+        } catch (_elicitErr) {
+          // Client does not support form elicitation — default to detailed report (WIZ-01 criterion 3).
+        }
+
+        if (!useWizard) {
+          // Detailed-report path — identical shape to pre-v1.1 output.
+          return {
+            content: [{ type: 'text' as const, text: JSON.stringify(report, null, 2) }],
+          };
+        }
+
+        // Wizard path — Phase 7 stub. Phase 8 replaces this with real issue selection.
+        // Return a JSON envelope so Phase 8 has the audit report and businessContext in hand.
+        const wizardPayload = {
+          marker: '[wizard] Phase 7 stub — issue selection lands in Phase 8',
+          report,
+          businessContext: businessContext ?? null,
+        };
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify(report, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(wizardPayload, null, 2) }],
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
