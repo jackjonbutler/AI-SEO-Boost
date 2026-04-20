@@ -108,15 +108,83 @@ export function registerAllTools(server: McpServer): void {
           };
         }
 
-        // Wizard path — Phase 7 stub. Phase 8 replaces this with real issue selection.
-        // Return a JSON envelope so Phase 8 has the audit report and businessContext in hand.
-        const wizardPayload = {
-          marker: '[wizard] Phase 7 stub — issue selection lands in Phase 8',
-          report,
-          businessContext: businessContext ?? null,
-        };
+        // Wizard path — Phase 8 issue selection.
+        // Filter to actionable findings (fail + warning). Pass findings need no fix action.
+        const actionableFindings = report.findings.filter(
+          (f) => f.status === 'fail' || f.status === 'warning',
+        );
+
+        // All-pass short-circuit — nothing to elicit, no checklist needed.
+        if (actionableFindings.length === 0) {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: 'Great news — the audit found no issues to fix. All 5 dimensions are passing.',
+            }],
+          };
+        }
+
+        // Build the checklist: one entry per actionable finding.
+        // Key is `dimension:status` composite (unique since runAudit emits one finding per dimension in v1).
+        // Title surfaces severity and the human-readable message (ISEL-01).
+        const issueItems = actionableFindings.map((f) => ({
+          const: `${f.dimension}:${f.status}`,
+          title: `[${f.severity.toUpperCase()}] ${f.dimension} — ${f.message}`,
+        }));
+
+        // Present the multi-select checklist. `default` pre-selects every item (ISEL-02).
+        const selectionResult = await server.server.elicitInput({
+          mode: 'form',
+          message: `${actionableFindings.length} of 5 dimensions have issues. Select which to fix — all are selected by default; deselect any you want to skip.`,
+          requestedSchema: {
+            type: 'object',
+            properties: {
+              selectedIssues: {
+                type: 'array',
+                title: 'Issues to fix',
+                items: { anyOf: issueItems },
+                default: issueItems.map((i) => i.const),
+              },
+            },
+            required: ['selectedIssues'],
+          },
+        });
+
+        // Decline / cancel — graceful exit, no error.
+        if (selectionResult.action !== 'accept') {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: 'Issue selection cancelled. No fixes will be applied.',
+            }],
+          };
+        }
+
+        // Empty selection — user deselected everything (success criterion 4).
+        const selectedKeys = (selectionResult.content?.selectedIssues ?? []) as string[];
+        if (selectedKeys.length === 0) {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: 'No issues selected. Exiting wizard without applying fixes.',
+            }],
+          };
+        }
+
+        // Filter findings to the user's selection and hand off to Phase 9.
+        const selectedFindings = actionableFindings.filter(
+          (f) => selectedKeys.includes(`${f.dimension}:${f.status}`),
+        );
+
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify(wizardPayload, null, 2) }],
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              marker: '[wizard] Issue selection complete — fix generation lands in Phase 9',
+              selectedFindings,
+              businessContext: businessContext ?? null,
+            }, null, 2),
+          }],
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
