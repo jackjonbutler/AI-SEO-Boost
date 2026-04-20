@@ -55,6 +55,13 @@ Full archive: `.planning/milestones/v1.1-ROADMAP.md`
 3. The `AuditReport` returned by `audit_ai_seo` includes a `pagesAudited` array listing every URL the crawler visited, so the caller can verify crawl scope without re-running
 4. `tsc --noEmit` passes with zero errors after all new type fields (`AuditFindingDiagnostics`, `suggestedToolCallArgs`, `pagesAudited`, `HttpMetadata`) are added — no existing tool signatures break
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Declare AuditFindingDiagnostics, HttpMetadata, and optional fields on AuditFinding, AuditReport, MarkdownDocument
+- [ ] 11-02-PLAN.md — Wire HTTP metadata capture in crawl.ts, llms-txt.ts, and robots-txt.ts
+- [ ] 11-03-PLAN.md — Populate pagesAudited in runAudit() and full codebase type-check
+
 ---
 
 #### Phase 12: Framework Detection
@@ -124,7 +131,7 @@ Full archive: `.planning/milestones/v1.1-ROADMAP.md`
 
 ---
 
-- [ ] Phase 11: HTTP Diagnostic Metadata Capture — Planned
+- [ ] Phase 11: HTTP Diagnostic Metadata Capture — 3 plans ready
 - [ ] Phase 12: Framework Detection — Planned
 - [ ] Phase 13: Schema Type Inference — Planned
 - [ ] Phase 14: Sitemap Coverage and Mirror Depth — Planned
@@ -144,7 +151,7 @@ Full archive: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Issue Selection | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 9. Context Accumulation | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 10. Tool Execution Engine | v1.1 | 2/2 | Complete | 2026-04-20 |
-| 11. HTTP Diagnostic Metadata Capture | v1.2 | 0/? | Planned | — |
+| 11. HTTP Diagnostic Metadata Capture | v1.2 | 0/3 | Planned | — |
 | 12. Framework Detection | v1.2 | 0/? | Planned | — |
 | 13. Schema Type Inference | v1.2 | 0/? | Planned | — |
 | 14. Sitemap Coverage and Mirror Depth | v1.2 | 0/? | Planned | — |
