@@ -41,10 +41,10 @@ Full archive: `.planning/milestones/v1.0-ROADMAP.md`
   2. After the audit completes, the tool output presents a clear fork: "Detailed report" or "Fix with wizard"
   3. Choosing "Detailed report" returns the same prioritized fix list as before v1.1
   4. Choosing "Fix with wizard" proceeds to the issue selection step
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 07-01: Extend `audit_ai_seo` input schema with optional `businessContext`, add wizard mode fork in handler
+- [ ] 07-01-PLAN.md — Make `businessContext` optional in `audit_ai_seo`, add post-audit elicitation fork (report vs wizard) with unsupported-client fallback, plus in-process smoke test covering all three branches
 
 ### Phase 8: Issue Selection
 **Goal**: Users see all audit issues as a toggleable checklist and can choose which to address before the fix sequence begins
@@ -100,7 +100,7 @@ Plans:
 | 4. Sitemap, Mirrors, and Schema | v1.0 | 3/3 | Complete | 2026-04-20 |
 | 5. FAQ Content | v1.0 | 1/1 | Complete | 2026-04-20 |
 | 6. Distribution | v1.0 | 1/1 | Complete | 2026-04-20 |
-| 7. Wizard Entry Point | v1.1 | 0/TBD | Not started | - |
+| 7. Wizard Entry Point | v1.1 | 0/1 | Ready to execute | - |
 | 8. Issue Selection | v1.1 | 0/TBD | Not started | - |
 | 9. Context Accumulation | v1.1 | 0/TBD | Not started | - |
 | 10. Tool Execution Engine | v1.1 | 0/TBD | Not started | - |
