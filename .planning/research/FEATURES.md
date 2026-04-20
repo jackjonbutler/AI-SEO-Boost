@@ -1,161 +1,405 @@
-# Feature Landscape: AI SEO Boost MCP Server
+# Feature Research: v1.2 Audit Observability and Framework Awareness
 
-**Domain:** AI-visibility SEO tooling — MCP server for generating and auditing AI-readable web assets
-**Researched:** 2026-04-17
-**Confidence note:** WebSearch and WebFetch tools were unavailable during this research session. Findings draw on training data (cutoff August 2025) plus the detailed project context in PROJECT.md. Confidence levels reflect this constraint. The llms.txt spec, schema.org types, and MCP design patterns are HIGH confidence. Competitive AI SEO tool comparisons are MEDIUM confidence.
+**Domain:** AI-visibility SEO audit tooling — MCP server whose UI is Claude Code
+**Researched:** 2026-04-20
+**Confidence:** MEDIUM-HIGH (WebSearch available; WebFetch denied; framework fingerprint signals are MEDIUM confidence from indirect sources; audit evidence patterns are HIGH confidence from Lighthouse/axe-core documentation)
 
 ---
 
-## Table Stakes
+## Context
 
-Features users expect from any SEO or MCP tool of this type. Missing = product feels incomplete or breaks trust.
+This research covers five NEW feature areas for v1.2. The existing audit infrastructure (5 dimensions, `AuditFinding` shape, wizard mode) is already built and is NOT re-researched here. The target user is a developer who just asked "why does audit say no schema when I know my site has schema?" — someone who needs to debug the audit result, not just act on it.
+
+---
+
+## Feature Area 1: Audit Finding Diagnostics (Evidence Alongside Findings)
+
+### What the problem is
+
+Current `AuditFinding` has `message: string`. A message like "Missing AI crawler rules for: GPTBot, ClaudeBot" tells the developer what is wrong but provides no evidence of what the tool actually found. The developer cannot distinguish "robots.txt was fetched and parsed successfully, these bots were absent" from "robots.txt couldn't be fetched at all."
+
+### How Lighthouse and axe-core handle this (HIGH confidence)
+
+**Lighthouse** structures audit details as a typed `details` object attached to each audit result. When an audit fails, `details.items` is an array of evidence rows. Each row contains: `nodeLabel` (human-readable description of the element), `snippet` (outerHTML of the offending element), `selector` (CSS selector to locate it), and `boundingRect` (optional, for visual). The key design principle: evidence is scoped to what caused the failure, not a dump of all page data. For a "missing alt text" failure, Lighthouse shows only the specific `<img>` tags that lacked alt text — not all images on the page.
+
+**axe-core** uses a similar model: each violation result contains `nodes`, where each node has `target` (CSS selector path), `html` (outerHTML snippet), and `failureSummary` (plain-language description of why it failed). Every violation also links to a `helpUrl` for remediation context. The critical design choice: axe-core separates `violations` (definite failures), `incomplete` (needs human review), `passes`, and `inapplicable`. This prevents noisy conflation of "failed" and "couldn't determine."
+
+**The evidence principle both tools share:** Show the minimum data needed to locate and understand the failure. A CSS selector + snippet is enough for a developer to open DevTools and find the element. A full page dump is noise.
+
+### Applied to this MCP audit context
+
+The "UI" is a chat interface showing tool call results. Over-verbose evidence creates scroll fatigue; under-specified evidence creates debugging blind spots. The right level: enough to answer "what did the tool actually find?" without requiring the developer to re-run the audit mentally.
+
+**For robots.txt findings:** Show the actual User-agent blocks that WERE found (truncated to relevant lines) alongside the list of missing bots. If robots.txt couldn't be fetched, show the HTTP status code and error. This directly addresses the "audit says fail but I know my robots.txt has GPTBot" debugging scenario.
+
+**For schema findings:** Show the JSON-LD `@type` values that were found (or "no JSON-LD blocks found") and the count of `<script type="application/ld+json">` tags parsed. If the page returned HTML, show a confirmation that parsing ran. If schema is present but wrong type, show exactly which types were found vs which were expected.
+
+**For llms.txt findings:** Show the HTTP status code from the HEAD request, not just "missing." A 403 is different from a 404 is different from a timeout.
+
+### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **llms.txt generation with all spec sections** | The llms.txt spec (llmstxt.org) defines required sections: H1 name, blockquote summary, and optional link sections. Users expect spec-compliant output — non-compliant files get ignored by crawlers. | Low | Required: `# Business Name`, blockquote description, link lists with optional `> description` per link. File must be at `/llms.txt` root. |
-| **Robots.txt AI crawler allowlist** | GPTBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot — all blocked by many default robots.txt templates. Users expect the tool to fix this automatically. | Low | Must not blindly overwrite existing rules. Must merge/patch, not replace. |
-| **Robots.txt sitemap pointer** | `Sitemap: https://example.com/sitemap.xml` directive is how all crawlers discover the sitemap. Missing = sitemap never found by bots. | Low | Append if missing; do not duplicate if present. |
-| **XML sitemap with valid structure** | W3C/sitemaps.org protocol: urlset, url, loc, lastmod, changefreq, priority. All crawlers expect this format verbatim. | Low | Priority values must be 0.0–1.0. lastmod must be ISO 8601. |
-| **Sitemap priority scoring logic** | Priority 1.0 for homepage, 0.8 for core service/product pages, 0.6 for supporting pages, 0.4 for blog/news is the de facto convention. Users expect non-flat priority assignment. | Medium | Scoring heuristic must be configurable or at least documented. |
-| **Markdown mirrors with valid frontmatter** | `title`, `description`, `url`, `lastModified` — standard frontmatter fields AI models use for context attribution. Missing = mirrors lose traceability. | Low | YAML frontmatter block at top of every `.md` file. |
-| **HTML-to-Markdown stripping of chrome** | Nav, footer, scripts, cookie banners, ad slots — all noise that degrades AI comprehension. Users expect clean prose output, not raw HTML dump. | Medium | Must preserve headings, paragraphs, lists, tables. Drop: nav, header, footer, aside, script, style, noscript. |
-| **LocalBusiness JSON-LD schema** | Google and AI models use LocalBusiness schema for business name, address, phone, hours, geo. It is the baseline for local business AI visibility. | Low | Required fields: @type, name, address (PostalAddress), telephone. Highly recommended: openingHours, geo, url, sameAs. |
-| **FAQPage JSON-LD schema** | FAQPage schema is one of the highest-impact schema types for AI quotability — models directly extract Q&A pairs from it. | Low | Required: @type FAQPage, mainEntity array of Question + acceptedAnswer. |
-| **Service JSON-LD schema** | For service businesses, Service schema signals what the business does to both Google and AI. | Low | Required: @type Service, name, provider (LocalBusiness ref), areaServed. |
-| **AI SEO audit output that is actionable** | Users will run the audit before doing anything else. Audit must return a prioritized fix list, not a score — "Fix X because Y" not "Score: 62/100". | Medium | Must check: llms.txt presence, robots.txt AI allowlist, sitemap present + valid, schema markup present, markdown mirrors present. |
-| **No hallucinated content in generated files** | Business-critical content (name, address, phone, services, hours) must come from user-provided input, not invented. Users will publish these files. | Low | All generators must have required input validation. Never fill unknown fields with plausible-sounding invented text. |
-| **Dual access mode (local folder + live URL)** | Developers want to generate from source files before deploy. Non-developers want to audit a live URL. Both modes are table stakes for the target audience. | High | Two separate code paths: fs traversal for local, HTTP crawl for URL. Shared output contract. |
-| **Tool descriptions that are MCP-discoverable** | MCP tools need `description` and `inputSchema` fields that are accurate and specific enough for an AI to choose the right tool without being told explicitly. Vague descriptions = tools never called. | Low | Each tool's description must explain when to use it, what input it needs, what it returns. |
-| **Input validation with clear error messages** | Missing required fields (businessName, siteUrl) must return an MCP error with a human-readable message. Silent failures or JSON parse errors = user confusion. | Low | Use zod or equivalent for schema validation on tool inputs. |
+| HTTP status code in network-fetch findings | Distinguishes "not found" from "forbidden" from "server error" — affects fix approach | LOW | Already available from `res.status` — just needs to surface in `message` |
+| What-was-found vs what-was-missing split | "GPTBot was missing" implies we did find and parse the file — currently conflated with fetch errors | LOW | Restructure message to separate "fetched OK" from "parsed, missing these bots" |
+| Explicit confirmation when fetch/parse succeeded | Developer debugging a false-negative needs to know: "Yes, the tool did reach and parse your file" | LOW | Add `evidence` sub-field or prefix message with "Parsed robots.txt at [url]: ..." |
+| Schema types actually found, not just pass/fail | "Schema present but LocalBusiness not detected. Found: WebSite, Organization" — already partially there, keep this pattern | LOW | Already implemented in schema dimension — preserve and expand |
 
----
-
-## Differentiators
-
-Features that set AI SEO Boost apart. Not universally expected, but create genuine competitive advantage.
+### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **llms-full.txt companion file** | The llmstxt.org spec defines an optional `/llms-full.txt` with complete page content inline (not just links). Generating both maximizes coverage for models that prefer inline content vs link traversal. | Medium | llms-full.txt includes the full text of each page concatenated under its link heading. Size limit consideration: keep under ~100KB. |
-| **Audit returns MCP-tool call suggestions** | Instead of just "you're missing llms.txt", the audit returns: "Run generate_llms_txt with these inputs: {...}". This makes the audit the entry point that drives the rest of the workflow. | Medium | Requires the audit to know the input shapes of the other tools and construct pre-filled suggestions. |
-| **Per-page schema injection guidance** | Rather than generating a single schema block, identify which pages need which schema types and generate separate JSON-LD per page with page-specific content. | Medium | Page type detection heuristic: URL path analysis + heading content. Contact page → LocalBusiness. FAQ page → FAQPage. |
-| **AI crawler coverage check in audit** | Explicitly test which of GPTBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot are blocked vs allowed in robots.txt, not just "robots.txt exists". | Low | Parse robots.txt User-agent directives, report per-crawler status. |
-| **Markdown mirror quality scoring** | After generating mirrors, score each one: word count, heading structure present, no boilerplate detected, estimated reading level. Flags low-quality pages before they harm AI perception. | Medium | Simple heuristics: word count < 150 = warn, no H2/H3 headings = warn, duplicate content ratio > 60% = warn. |
-| **Location/service page content scaffolding** | Generating full city + service page content (not just schema) is a level above what generic SEO tools offer. Outputs draft page content structured for AI quotability: clear H1, definition paragraph, service list, local signals, FAQ section. | High | Requires business details input + city/service list. Output is a content template, not final copy — avoids hallucination risk. |
-| **FAQ content optimized for AI citation style** | Generic FAQ generators produce conversational Q&A. This tool generates Q&A structured the way AI models cite information: short declarative answers, business name in the answer, specific claims not hedged phrases. | Medium | Output format: Q: "What does [Business] charge for [service]?" A: "[Business] charges $X for [service] in [City]." — specificity over vagueness. |
-| **llms.txt link prioritization** | Order links in llms.txt by AI-relevance: services first, FAQ next, about/contact last. Most generators dump links alphabetically. Ordering matters because some models truncate. | Low | Simple sort: detect page type by URL path pattern or title, apply priority rank. |
-| **Incremental update mode** | Re-running a tool on an existing site updates only changed files rather than regenerating everything. Prevents wiping manual edits. | High | Requires hash comparison or lastmod tracking. Complex to implement correctly — likely Phase 2. |
-| **robots.txt patch mode (non-destructive)** | Parse existing robots.txt, add only missing AI crawlers and sitemap directive, preserve all existing rules exactly. Most competitive tools either skip robots.txt or overwrite it. | Medium | Full robots.txt parser required (not just string append). Must handle: wildcards, Allow/Disallow, Crawl-delay, multiple User-agent blocks. |
+| Truncated evidence snippet in finding | Show first 3–5 relevant lines of robots.txt (the User-agent blocks found) so developer can visually confirm parse was correct | MEDIUM | Requires storing snippet during parse, not just boolean result |
+| `evidence` structured field alongside `message` | Separate `evidence: { found: string[], missing: string[], rawSnippet?: string }` makes findings machine-parseable by Claude for wizard mode | MEDIUM | Needs `AuditFinding` type extension |
+| Source URL shown in warning findings | "Could not fetch https://example.com/robots.txt" instead of "Could not fetch robots.txt" — enables copy-paste verification in browser | LOW | URL is already computed during fetch — pass it through |
+
+### Anti-Features
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Full robots.txt content in finding | Developer wants to "see everything" | Creates scroll fatigue in chat UI; 50-line robots.txt dumps as tool result is noise | Show only the relevant User-agent blocks — 3–8 lines max |
+| Full HTML dump when schema fails | Developer wants to debug cheerio parsing | Massive noise; HTML can be megabytes | Show count of `<script type="application/ld+json">` tags found + their @type values only |
+| Stack trace in error findings | Feels like more information | Exposes internals; not actionable for the developer | Surface the actionable part: HTTP status, network error message, or file path |
 
 ---
 
-## Anti-Features
+## Feature Area 2: Framework Detection from HTML
 
-Features to explicitly NOT build in v1 (and probably ever for this tool's positioning).
+### Research findings (MEDIUM confidence — verified via OWASP, Wappalyzer docs, Astro source)
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Keyword research / search volume data** | Requires third-party API integration (Ahrefs, SEMrush, etc.), costs money, and is not the playbook's model. AI SEO Boost is about content structure, not keyword targeting. | Document in README: "For keyword research, use [tool]". This MCP focuses on the structure layer. |
-| **Backlink analysis** | Same problem — external data dependency, not the AI visibility problem. Scope creep from core value prop. | Out of scope permanently. |
-| **Automatic publishing / deploying files** | Writing to `/public` on a live server requires credentials, error handling, and could catastrophically overwrite production files. Too dangerous as a default behavior. | Generate files to a local output directory. User deploys manually or via their existing pipeline. |
-| **Content SEO scoring (Clearscope / Surfer style)** | NLP-heavy, requires reference corpus, and is a completely different product category. Would balloon scope with no connection to AI visibility. | Out of scope permanently. |
-| **Google Search Console API** | GSC OAuth flow + API complexity for v1 is disproportionate to value. GSC setup is a one-time manual step users can follow a checklist for. | Document manual GSC setup steps in README. Flag as v2 if validated. |
-| **Multi-site / agency dashboard** | This is Claude Code as the UI — not a web app. Building a multi-tenant management layer inverts the architecture. | Single-site per invocation. Agencies run the MCP per client site. |
-| **Natural language SEO recommendations** | "Consider improving your meta descriptions" style advice is noise. AI tools already provide this kind of coaching. This MCP should generate files, not give generic writing advice. | Audit output must be specific to the 5 AI SEO dimensions only. Link to Brycen's playbook for strategy context. |
-| **HTML meta tag injection** | Requires parsing and rewriting HTML files — high risk of corrupting existing markup. Also, meta tags are less important for AI visibility than the file-based signals this tool targets. | Out of scope. Document meta tag best practices in README instead. |
-| **Automatic re-crawling / scheduling** | Scheduling requires a daemon process, which conflicts with the MCP model (invoked on demand by the AI). | MCP tools are invoked explicitly. Users schedule re-runs via their own cron/CI if needed. |
+Framework detection from rendered HTML is a fingerprinting problem with two signal tiers: **high-reliability** (asset path prefixes that are hard-coded by the framework build system) and **lower-reliability** (meta tags and comments that are often stripped or configurable).
+
+**Asset path prefixes — high reliability, hard to suppress:**
+
+| Framework | Asset Path Signal | Reliability | Notes |
+|-----------|-------------------|-------------|-------|
+| Next.js | `/_next/static/` in `<script src>` or `<link href>` | HIGH | Hard-coded in Next.js webpack config; can be overridden with `assetPrefix` but rarely is |
+| Nuxt | `/_nuxt/` in script/link tags | HIGH | Nuxt's default public path; configurable via `router.base` but unusual |
+| WordPress | `/wp-content/` and `/wp-includes/` in script/link/img tags | HIGH | Core WP file structure; only CDN configs suppress this |
+| Astro | `/_astro/` in script/link tags | HIGH | Astro build output; not configurable in standard config |
+| Gatsby | `/static/` + content-hashed filenames (`filename.abc123.js`) | MEDIUM | `/static/` path is shared with other tools; hash pattern is distinctive but not unique |
+| SvelteKit | `/_app/immutable/` in script/link tags | HIGH | SvelteKit's default output path for immutable assets |
+| Remix | `/build/` directory pattern | MEDIUM | Remix convention but easily customized; less distinctive |
+
+**HTML comment and element signals — medium reliability, often configurable:**
+
+| Framework | Signal | Reliability | Notes |
+|-----------|--------|-------------|-------|
+| Astro | `<astro-island>` custom element present in DOM | HIGH (when client directives used) | Only present if interactive islands are used; static Astro sites won't have this |
+| Astro | `data-astro-transition-scope` attributes | MEDIUM | Only present when View Transitions API is used |
+| WordPress | `<!-- wp:paragraph -->` Gutenberg block comments in HTML | HIGH | Present on pages using Gutenberg editor; classic editor has no comments |
+| WordPress | `<meta name="generator" content="WordPress X.X.X">` | HIGH | Default; theme can suppress it but rarely does |
+| Next.js | `<meta name="generator">` — NOT a reliable signal | LOW | Next.js does not emit a generator meta tag by default |
+| Nuxt | `nuxt-link` class on anchor elements | MEDIUM | Present in Nuxt 2; Nuxt 3 switched to standard elements |
+| SvelteKit | `__sveltekit` JavaScript variable in inline script | HIGH (when SSR used) | Svelte uses CSS class prefixes (`svelte-[hash]`) as secondary signal |
+
+**HTTP header signals (bonus, not HTML):**
+
+- `X-Powered-By: Next.js` — present if not suppressed
+- `X-Generator: Nuxt` — Nuxt default response header
+
+**Key finding:** Asset path prefixes are more reliable than meta tags because they are structural output of the build system, not configurable metadata. A developer who suppresses `<meta name="generator">` rarely reconfigures `assetPrefix`. For this tool's use case (inferring which deploy tools or fix patterns apply), asset paths are the right primary signal.
+
+**Detection confidence model:**
+
+- One asset path match → "likely [framework]" — report as `detected: true`, `confidence: 'high'`
+- Meta tag only → "possibly [framework]" — report as `detected: true`, `confidence: 'medium'`
+- No signals → `detected: false`; do not guess
+
+### Table Stakes
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Detect Next.js, Nuxt, WordPress from asset paths | These three dominate market share; most audited sites will be one of these | LOW | Regex match on `/_next/`, `/_nuxt/`, `/wp-content/` in HTML link/script hrefs |
+| Return detected framework in audit metadata | Developer needs to know "my site was identified as Next.js" to understand why certain suggestions appear | LOW | Add `detectedFramework?: string` to `AuditReport` |
+| Confidence level on detection | Asset path match is different from meta tag guess — communicate this | LOW | `frameworkConfidence: 'high' \| 'medium' \| 'unknown'` |
+| No detection when no signals found | False positives are worse than no detection for trust reasons | LOW | Default to `detectedFramework: null` when no signals match |
+
+### Differentiators
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Detect Astro via `<astro-island>` and `/_astro/` | Astro is rapidly growing for content sites; schema fix patterns differ for Astro | LOW | Check both signals; either one is sufficient |
+| Detect SvelteKit via `/_app/immutable/` | SvelteKit sites are an increasing portion of the developer target audience | LOW | Simple path prefix check |
+| Use framework to tailor `suggestedToolCall` message | "Your Next.js site uses App Router — place schema in `app/layout.tsx`" is more actionable than "add JSON-LD to your HTML" | MEDIUM | Requires framework-to-implementation-guide mapping |
+| Multi-framework safety (monorepos) | Some sites mix WP backend + React frontend; detect multiple signals without asserting a single winner | MEDIUM | Return array of candidates ranked by confidence |
+
+### Anti-Features
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Detect framework version number | "You're on Next.js 13.4" seems useful | Requires content-hash fingerprinting against version databases — fragile, high maintenance, low accuracy for this use case | Report "Next.js detected" without version; version matters for security, not for AI SEO fixes |
+| Detect hosting provider (Vercel, Netlify) | Useful for docs links | HTTP header parsing adds latency; hosting detection is scope creep relative to AI SEO | Out of scope for v1.2; document as future |
+| Attempt framework detection on local folder targets | Developer knows their own framework | Parsing local HTML for framework signals is redundant — developer is the expert | Only run framework detection on URL targets |
 
 ---
 
-## Feature Dependencies
+## Feature Area 3: Schema Type Inference
+
+### Research findings (HIGH confidence — schema.org is authoritative, Google's structured data docs are definitive)
+
+The current schema dimension checks for `LocalBusiness` as the expected type for all sites, which is wrong for SaaS tools, travel apps, and content sites. Schema type selection should be driven by business category.
+
+**Business type to schema @type mapping (authoritative from schema.org + Google Search Central):**
+
+| Business Category | Primary @type | Secondary @type | When to add both |
+|-------------------|---------------|-----------------|-----------------|
+| Local service business (plumber, dentist, restaurant) | `LocalBusiness` (or subtype) | `Organization` | When physical location matters |
+| SaaS / software tool | `SoftwareApplication` | `WebApplication` | `WebApplication` when browser-only (no install); `SoftwareApplication` for downloadable |
+| Travel / booking app | `TravelAgency` or `LodgingBusiness` | `OnlineBusiness` | Use most specific subtype available |
+| E-commerce store | `OnlineStore` | `Organization` | Google recommends `OnlineStore` over generic `OnlineBusiness` for products |
+| Agency / consultancy | `ProfessionalService` | `Organization` | `ProfessionalService` is a subtype of `LocalBusiness` |
+| Content site / blog | `WebSite` | `Organization` | `WebSite` with `SearchAction` for sitelinks searchbox |
+| News / media | `NewsMediaOrganization` | `WebSite` | Use `Article` on article pages separately |
+
+**Schema.org subtypes of `LocalBusiness` (most specific wins):**
+- `Restaurant`, `CafeOrCoffeeShop`, `FastFoodRestaurant`
+- `MedicalBusiness` → `Dentist`, `Physician`, `Optician`
+- `LegalService` → `Attorney`
+- `FinancialService` → `AccountingService`, `InsuranceAgency`
+- `HomeAndConstructionBusiness` → `Plumber`, `Electrician`, `RoofingContractor`
+- `TravelAgency`
+- `LodgingBusiness` → `Hotel`, `BedAndBreakfast`
+- `ProfessionalService`
+
+**Recommended fallback hierarchy when business type is ambiguous:**
+1. If physical address provided → try `LocalBusiness` subtype
+2. If no address but provides software/app → `SoftwareApplication` or `WebApplication`
+3. If services listed but no clear category → `ProfessionalService` (safe subtype of `LocalBusiness`)
+4. If no signals → `Organization` (always valid, but weakest signal value)
+
+**Critical finding:** Google explicitly states "use the most specific subtype." Auditing for `LocalBusiness` when the site is a SaaS tool and producing a warning is both a false positive AND misleading — it suggests the developer add wrong schema.
+
+**`applicationCategory` for SoftwareApplication:** schema.org defines this as a free-text field. Google does not enforce controlled vocabulary, but common values are: `"BusinessApplication"`, `"SEOApplication"`, `"UtilitiesApplication"`, `"WebApplication"`. For this MCP server itself, `"SEOApplication"` is the correct value.
+
+### Table Stakes
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Business-type-aware schema validation | Validating a SaaS for `LocalBusiness` is a false positive; breaks trust in the audit | MEDIUM | Requires `businessType` field in audit input (or inferred from business context) |
+| Report found schema types with "appropriate for your business type" judgment | Developer needs to know: "Organization found — this is a reasonable fallback but add SoftwareApplication for better AI signals" | LOW | Extend existing `types.join(', ')` message with judgment |
+| Do not flag SoftwareApplication as a warning | Currently schema dimension warns on anything non-LocalBusiness — wrong for SaaS | LOW | Update `checkSchemaMarkup` pass condition to accept multiple valid type families |
+
+### Differentiators
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Accept `businessType` in `audit_ai_seo` input | Allows informed schema type validation instead of hardcoded LocalBusiness check | LOW | Add optional `businessType: 'local' \| 'saas' \| 'ecommerce' \| 'travel' \| 'agency' \| 'content'` to audit input |
+| Suggest specific @type in `generate_schema_markup` call | Instead of "run generate_schema_markup", suggest "run generate_schema_markup with type: SoftwareApplication" | MEDIUM | `suggestedToolCall` becomes structured with pre-filled args |
+| Infer business type from business context fields | If `businessType` not given but context has `siteUrl` with no address → lean toward SoftwareApplication; if address provided → LocalBusiness | MEDIUM | Heuristic: presence of `address` fields → local business; presence of `pricing` → SaaS or e-commerce |
+
+### Anti-Features
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Validate all schema.org properties exhaustively | "Complete schema validation" sounds thorough | Schema.org has 900+ types and thousands of properties; full validation is a separate product (use Google's Rich Results Test) | Validate only the presence and type — not property completeness. Link to Rich Results Test for full validation. |
+| Force-suggest the "most specific" subtype | Automated specificity maximization sounds correct | Suggesting `Dentist` when business said `healthcare` requires confident classification — hallucination risk | Suggest at the category level (`LocalBusiness`) and let developer choose subtype from a documented list |
+
+---
+
+## Feature Area 4: Sitemap-Based Coverage Assessment
+
+### Research findings (MEDIUM confidence — Screaming Frog docs, sitemap spec, crawl tool conventions)
+
+**The coverage problem for this tool:** The audit currently checks if `llms.txt`, `robots.txt`, schema, FAQ, and markdown mirrors exist — but does not assess whether the sitemap covers the site's actual pages. A sitemap with 5 URLs on a 500-page site is a different failure than a missing sitemap.
+
+**How professional crawl tools handle coverage:**
+
+Screaming Frog's sitemap audit approach: fetch the XML sitemap, extract all URLs, then cross-reference against crawled URLs to find: (a) URLs in sitemap but not crawled (blocked or broken), (b) URLs crawled but not in sitemap (orphan pages). Coverage % = (sitemap URLs that resolve successfully) / (total sitemap URLs).
+
+For this MCP tool, re-crawling the entire site is not practical — the existing crawl fetches only what's needed for the 5 audit dimensions. The pragmatic approach used by lightweight audit tools: **fetch the sitemap, count URLs, sample N URLs to verify they return 200**.
+
+**Sample size convention for coverage verification:**
+- Under 10 URLs: check all
+- 10–50 URLs: check all (fast enough)
+- 50–200 URLs: sample 20 URLs (stratified — pick first, last, and random middle)
+- 200+ URLs: sample 25–30 URLs (diminishing returns beyond this)
+- Hard cap: 30 HTTP requests for coverage verification to stay under a 15-second timeout budget
+
+**Coverage % reporting convention:**
+- Coverage % = (sampled URLs returning 200) / (sampled URLs checked) × 100
+- Report as: `sitemapUrlCount: 50, sampleChecked: 20, samplePass: 18, coverageEstimate: '90%'`
+- Always label it "estimated" — it is a sample, not a full crawl
+- If sitemap is missing: `sitemapFound: false, coverageEstimate: null`
+
+**Dependency:** Coverage assessment requires sitemap discovery first (fetch `/sitemap.xml`, follow `Sitemap:` directive in `robots.txt`, or check `/sitemap_index.xml`). This is a new network operation not in current audit.
+
+### Table Stakes
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Sitemap presence check (pass/fail) | Does a sitemap exist at `/sitemap.xml` or as declared in robots.txt? | LOW | Already partly implied by robots-ai dimension; make it explicit |
+| Sitemap URL count | How many pages does the site declare? 5 vs 500 is critical context | LOW | Parse XML, count `<url>` elements |
+| Sample coverage % with explicit "estimated" label | Developers expect a coverage number; "estimated" prevents over-interpretation | MEDIUM | Fetch N URLs from sitemap, check HTTP 200, compute ratio |
+
+### Differentiators
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Detect sitemap index (multiple sitemaps) | Large sites use sitemap index files; detecting this shows the tool handles enterprise sites | MEDIUM | Check if root element is `<sitemapindex>` vs `<urlset>`; report child sitemap count |
+| Flag URLs returning non-200 in sample | Coverage 85% with "3 URLs returned 404" is actionable; 85% alone is not | MEDIUM | Track status codes per sampled URL |
+| Compare sitemap URL count to markdown mirror count | If sitemap has 50 URLs but only 10 markdown mirrors exist, flag the gap | LOW | Requires markdown mirror dimension to also report count (coordination between dimensions) |
+
+### Anti-Features
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Full sitemap crawl (all URLs) | "Check everything" sounds thorough | A 500-URL sitemap × 5s timeout = 40+ minutes; completely impractical for an interactive MCP tool | Sample with stated sample size and "estimated" label |
+| Validate sitemap XML against W3C schema | Correctness seems important | XML schema validation catches edge cases but adds library dependency and latency for rare failures; most sitemap failures are missing file or wrong URL format | Check for required elements (`<urlset>`, `<url>`, `<loc>`) only; link to sitemap validator for full validation |
+| Re-crawl to find orphan pages | "Find pages not in sitemap" is valuable | Requires spidering the whole site — completely out of scope for an on-demand MCP audit | Out of scope; document as a feature Screaming Frog covers well |
+
+**Dependencies:**
+```
+sitemap coverage assessment
+  → requires: sitemap URL (from /sitemap.xml or robots.txt Sitemap: directive)
+  → feeds: markdown mirror coverage comparison (needs sitemapUrlCount)
+  → feeds: AuditReport metadata (pagesAudited, sitemapFound fields)
+```
+
+---
+
+## Feature Area 5: Tool Argument Pre-Population
+
+### Research findings (MEDIUM confidence — MCP docs, ESLint patterns, axe-core conventions)
+
+**The pattern:** When an audit tool identifies a fixable problem, it should provide the exact invocation needed to fix it — not just name the fix tool. This is the difference between "run generate_schema_markup" and "run generate_schema_markup with these arguments pre-filled from what we know about your site."
+
+**How audit-to-fix handoff works in well-designed tools:**
+
+ESLint's `--fix` flag applies fixes in-place when a rule has a `fixable` property defined. The "handoff" is implicit — the same process that found the problem applies the fix. This is the ideal case (single tool) but inapplicable here because the audit and fix tools are separate MCP tools with different responsibilities.
+
+Lighthouse's approach (more analogous): Lighthouse audit results include `details.items` with structured data that downstream tools (like PageSpeed Insights) use to pre-populate fix recommendations. The audit output is structured data, not prose — this is what enables programmatic handoff.
+
+**For MCP tool chains specifically (from MCP best practices research):** Tools in MCP work best when they pass structured context forward. The current `suggestedToolCall: string` is a tool name only. The upgrade is: `suggestedToolCall: { tool: string, args: Record<string, unknown> }` — a structured object containing the tool name AND the arguments that can be pre-filled from what the audit already knows.
+
+**What the audit already knows that downstream tools need:**
+- `target` URL → `siteUrl` arg for all generator tools
+- Detected framework → can set `outputFormat` hints
+- Found schema types → can set `existingTypes` to avoid duplication
+- Missing bot names → can set `botsToAdd` for `configure_robots_txt`
+- Sitemap URL (if found in robots.txt) → can set `sitemapUrl` arg
+
+**The key constraint:** Pre-populated args must only include data the audit actually fetched and verified. Never invent values. Unprovided required args should be flagged as "needed from user" rather than guessed.
+
+**Pattern from axe-core:** Each violation includes `helpUrl` pointing to the specific remediation guide for that rule. For this MCP context, the equivalent is: each finding includes a `suggestedToolCall` structured object that Claude can use to construct the next tool invocation with confidence.
+
+### Table Stakes
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| `suggestedToolCall` includes tool name (already exists) | Developer or Claude needs to know which tool to call | ALREADY BUILT | Exists in current `AuditFinding` |
+| `suggestedArgs` with pre-fillable arguments | The audit knows `siteUrl` and which bots are missing — robots fix should pre-populate these | LOW | Extend `AuditFinding` with `suggestedArgs?: Record<string, unknown>` |
+| Pass `target` URL as `siteUrl` in all suggestions | Every fix tool needs to know where to write; audit already has target | LOW | Mechanical — audit knows target, always include it |
+| Mark which args still need user input | Pre-filled args + "also needs: businessName, address" is more useful than silently omitting | LOW | Add `requiresUserInput?: string[]` alongside `suggestedArgs` |
+
+### Differentiators
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Structured `suggestedToolCall` object instead of string | Enables Claude to call the suggested tool directly without re-parsing a prose instruction | MEDIUM | Change type from `string` to `{ tool: string, args: Partial<ToolInputs>, requiresUserInput: string[] }` |
+| Include missing bot list in robots.txt fix args | `configure_robots_txt` with `botsToAdd: ['GPTBot', 'ClaudeBot']` pre-filled from audit finding | LOW | Already computed as `missing` array during audit — pass it through |
+| Include found schema types in schema fix args | `generate_schema_markup` with `existingTypes: ['Organization']` so it doesn't duplicate | LOW | Already extracted during audit — pass through |
+| Schema type recommendation based on business context | If `businessType` was provided to audit, include `recommendedType: 'SoftwareApplication'` in schema fix args | MEDIUM | Depends on Feature Area 3 (schema inference) being implemented |
+
+### Anti-Features
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Auto-execute the suggested fix after audit | "Just fix it automatically" is appealing | Audit is a read-only diagnostic; auto-executing writes to user's files without explicit consent is dangerous. The wizard mode already handles opt-in execution. | Keep audit as diagnostic only; wizard mode handles execution with user confirmation |
+| Pre-fill content fields (businessName, description) from crawled HTML | "The audit fetched the homepage — use its title tag as businessName" | Scraping content for business facts is unreliable and risks hallucination in generated files. Title tags are not canonical business names. | Require business context input explicitly; never infer content from scraped HTML |
+| Generate complete tool invocation as a CLI string | `audit_ai_seo returns: "run configure_robots_txt siteUrl=https://example.com botsToAdd=GPTBot"` | String CLI format is fragile for machine parsing; MCP tools use JSON input schemas | Use structured `suggestedArgs` object, not serialized CLI strings |
+
+**Dependencies:**
+```
+suggestedArgs pre-population
+  → requires: audit dimensions return structured findings (not just message strings)
+  → requires: AuditFinding type extended with suggestedArgs field
+  → enables: wizard mode to construct tool calls without user re-entering target URL
+  → enables: Claude to propose exact tool invocations in chat
+
+structured suggestedToolCall (feature 5)
+  ← depends on: framework detection (feature 2) for framework-specific args
+  ← depends on: schema inference (feature 3) for recommendedType arg
+```
+
+---
+
+## Feature Dependencies (Cross-Area)
 
 ```
-audit_ai_seo
-  → Informs which of the following are needed (entry point)
+detectedFramework (Feature 2)
+  └──enhances──> suggestedToolCall args (Feature 5)
+                    [framework-specific fix instructions]
 
-generate_llms_txt
-  → No dependencies (standalone, uses business details input)
+businessType / schema inference (Feature 3)
+  └──requires──> businessType in audit input
+  └──enhances──> suggestedToolCall args (Feature 5)
+                    [recommendedType pre-filled]
 
-generate_markdown_mirrors
-  → Requires: site access (local folder OR URL)
-  → Should run before: generate_sitemap (mirrors add URLs to sitemap)
+sitemapUrlCount (Feature 4)
+  └──enables──> markdownMirrorCoverage comparison
+  └──feeds──> AuditReport pagesAudited metadata
 
-generate_sitemap
-  → Benefits from: generate_markdown_mirrors (knows all .md page URLs)
-  → Required before: configure_robots_txt (robots.txt points to sitemap)
+evidence field in AuditFinding (Feature 1)
+  └──feeds──> suggestedArgs construction (Feature 5)
+                    [evidence.missing → botsToAdd, evidence.found → existingTypes]
 
-configure_robots_txt
-  → Requires: sitemap URL (from generate_sitemap or user-provided)
-  → Depends on: knowledge of deployed site URL
-
-generate_schema_markup
-  → Requires: business details input (name, address, phone, services)
-  → Standalone — does not depend on other tools
-
-generate_faq_content
-  → Requires: business details input (services, common customer questions)
-  → Output feeds into: generate_schema_markup (FAQPage schema uses FAQ content)
-  → Output feeds into: generate_location_service_pages (FAQ section per page)
-
-generate_location_service_pages
-  → Requires: business details + city list + service list
-  → Benefits from: generate_faq_content output (reuses FAQ blocks)
-  → Output feeds into: generate_markdown_mirrors (pages are input to mirror generation)
-  → Output feeds into: generate_sitemap (new pages need sitemap entries)
+AuditFinding type extension (needed for Features 1 and 5)
+  └──must ship together: evidence + suggestedArgs
+  └──breaking change: suggestedToolCall string → object requires migration
 ```
 
-Recommended invocation order for a greenfield site:
-1. `audit_ai_seo` — understand current state
-2. `generate_llms_txt` — fastest win, zero dependencies
-3. `generate_faq_content` — feeds downstream tools
-4. `generate_schema_markup` — uses FAQ output
-5. `generate_location_service_pages` — generates new pages
-6. `generate_markdown_mirrors` — mirrors all pages including newly generated ones
-7. `generate_sitemap` — captures all URLs including mirrors
-8. `configure_robots_txt` — final step, points to completed sitemap
+### Dependency notes
+
+- **Feature 1 (evidence) and Feature 5 (pre-population) share a type extension:** Both require changes to `AuditFinding`. They should be designed together to avoid two separate migrations.
+- **Feature 3 (schema inference) requires a new audit input field:** `businessType` must be added to `audit_ai_seo` tool input schema. This is a non-breaking addition (optional field with default behavior).
+- **Feature 4 (sitemap coverage) is a new audit dimension:** Adding sitemap as a 6th dimension or as metadata on the existing `AuditReport`. If added as metadata, no change to `AuditFinding` type; if added as a finding, it fits naturally but adds complexity.
+- **Feature 2 (framework detection) has no upstream dependencies:** It is additive — fetches HTML already fetched by schema dimension, runs pattern matching, adds `detectedFramework` to `AuditReport`. Can ship independently.
 
 ---
 
-## MVP Recommendation
+## Prioritization Matrix
 
-Prioritize for v1 (in order):
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Structured evidence in findings (Feature 1, table stakes) | HIGH — unblocks debugging | LOW — data already computed, just not surfaced | P1 |
+| `suggestedArgs` pre-population (Feature 5, table stakes) | HIGH — enables wizard mode quality | LOW — mechanical pass-through of existing data | P1 |
+| Schema type inference / businessType input (Feature 3) | HIGH — fixes false positives on SaaS sites | MEDIUM — new input field + type mapping logic | P1 |
+| Framework detection (Feature 2, table stakes) | MEDIUM — directional for fix instructions | LOW — regex on already-fetched HTML | P2 |
+| Sitemap coverage (Feature 4, table stakes) | MEDIUM — new signal not currently measured | MEDIUM — new HTTP requests, XML parsing, sampling logic | P2 |
+| Structured `suggestedToolCall` object (Feature 5, differentiator) | HIGH — enables machine-readable handoff | MEDIUM — type change + migration of all 5 dimension modules | P1 (ship with evidence field extension) |
+| Framework-tailored fix messages (Feature 2, differentiator) | MEDIUM — better developer experience | MEDIUM — framework-to-guide mapping | P3 |
+| Sitemap index detection (Feature 4, differentiator) | LOW — rare in this tool's target market | MEDIUM | P3 |
 
-1. **`audit_ai_seo`** — First thing any user will run. De-risks everything else. Defines the "before" state.
-2. **`generate_llms_txt`** — Highest impact / lowest complexity. The signature feature of the playbook.
-3. **`configure_robots_txt`** (patch mode) — Many sites block AI crawlers by default. Fastest ROI fix.
-4. **`generate_sitemap`** — Required for full AI crawlability. Moderate complexity.
-5. **`generate_markdown_mirrors`** — Highest complexity (HTML parsing, dual access mode) but core to the playbook.
-6. **`generate_schema_markup`** — LocalBusiness + FAQPage are highest-impact schema types.
-7. **`generate_faq_content`** — Feeds schema markup and location pages.
-8. **`generate_location_service_pages`** — Most complex content generation; most value for local businesses.
+---
 
-All 8 tools are in scope for v1 per PROJECT.md. The ordering above is for implementation sequencing within v1, not for deferral.
+## Implementation Sequence Recommendation
 
-**Defer to v2:**
-- `llms-full.txt` companion file — valuable but not in the original 8-tool spec
-- Incremental update mode — complexity high, manual re-run is acceptable for v1
-- Audit-to-tool-call suggestions — powerful but requires tool input schema knowledge baked into audit logic
+1. **Extend `AuditFinding` type** — add `evidence` and `suggestedArgs` together (single breaking change)
+2. **Update all 5 dimension modules** to populate `evidence` and `suggestedArgs`
+3. **Add `businessType` to audit input** — enables correct schema validation
+4. **Add framework detection** — additive, no dimension changes needed
+5. **Add sitemap coverage** — new dimension or metadata; implement after core type changes stabilize
 
 ---
 
 ## Sources
 
-**Confidence assessment:**
+| Source | Confidence | Used For |
+|--------|------------|----------|
+| Lighthouse understanding-results.md (GitHub) | HIGH | Evidence format: `details.items`, `nodeLabel`, `snippet`, `selector` structure |
+| axe-core API documentation (Deque) | HIGH | `nodes[].html`, `nodes[].target`, `failureSummary`, result categories pattern |
+| OWASP Web Security Testing Guide — Fingerprint Web Application Framework | MEDIUM | Asset path signals per framework; WordPress HTTP response codes for path probing |
+| Wappalyzer documentation | MEDIUM | Multi-signal detection approach; HTML + headers + JS variables |
+| Astro GitHub source (astro-island.ts) | MEDIUM | `<astro-island>` custom element, `data-astro-*` attributes, `astro:end` comment marker |
+| schema.org/Organization, /SoftwareApplication, /LocalBusiness | HIGH | Type hierarchy and subtype recommendations |
+| Google Search Central — Organization structured data | HIGH | "Use most specific subtype" recommendation; `OnlineStore` over `OnlineBusiness` |
+| Dan Taylor SEO — Schema for SaaS | MEDIUM | SoftwareApplication + WebApplication mapping for SaaS category |
+| Screaming Frog — How to Audit XML Sitemaps | MEDIUM | Sitemap audit approach: URL count, cross-reference, coverage assessment |
+| MCP tool design best practices (DEV Community) | MEDIUM | Fewer tools, better descriptions, outcome-oriented design principle |
+| ESLint auto-fix documentation | HIGH | `fixable` property pattern; audit-finding-to-fix handoff model |
 
-| Area | Confidence | Basis |
-|------|------------|-------|
-| llms.txt spec requirements | HIGH | llmstxt.org spec is well-documented in training data; H1 + blockquote + link sections are the defined structure |
-| robots.txt AI crawler list | HIGH | GPTBot (OpenAI), ClaudeBot (Anthropic), PerplexityBot, Google-Extended, CCBot are all documented in training data with their respective User-agent strings |
-| schema.org required fields | HIGH | schema.org/LocalBusiness, schema.org/FAQPage, schema.org/Service are stable, well-documented specs |
-| XML sitemap spec | HIGH | sitemaps.org protocol is stable and well-documented |
-| MCP tool design patterns | MEDIUM | Based on @modelcontextprotocol/sdk patterns; Claude's own tool definitions provide the canonical example |
-| Competitive AI SEO tool feature comparison | LOW | Could not verify current feature sets of tools like Alli AI, Conductor, BrightEdge, or AI-specific tools — WebSearch unavailable |
-| llms-full.txt spec detail | MEDIUM | Defined in llmstxt.org spec in training data but could not verify current spec version |
+---
 
-**Key external references to verify when tools are available:**
-- https://llmstxt.org — canonical spec for llms.txt and llms-full.txt
-- https://schema.org/LocalBusiness — required and recommended properties
-- https://schema.org/FAQPage — Question/acceptedAnswer structure
-- https://www.sitemaps.org/protocol.html — XML sitemap protocol
-- https://openai.com/gptbot — GPTBot User-agent string and crawl policy
-- https://www.anthropic.com/claude-crawl-policy — ClaudeBot documentation
+*Feature research for: AI SEO Boost MCP Server v1.2 — audit observability and framework awareness*
+*Researched: 2026-04-20*
