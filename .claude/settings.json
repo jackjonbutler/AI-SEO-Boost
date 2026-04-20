@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs: initialize project\" --files .planning/PROJECT.md)",
+      "Read(//c/Users/jackb/.claude/get-shit-done/templates/research-project/**)",
+      "Bash(python3 /dev/stdin)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 \"c:/Users/jackb/Documents/MyMCPServers/AI SEO Boost/.planning/research/_write_summary.py\")",
+      "Read(//c/Users/jackb/.claude/get-shit-done/templates/**)",
+      "Read(//c/Users/jackb/.claude/projects/c--Users-jackb-Documents-MyMCPServers-AI-SEO-Boost/memory/**)",
+      "WebSearch",
+      "Bash(npx tsc *)",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs\\(phase-2\\): complete phase execution\" --files .planning/ROADMAP.md .planning/STATE.md \".planning/phases/02-acquisition-pipeline/02-VERIFICATION.md\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\jackb\\Documents\\MyMCPServers\\AI SEO Boost"
+    ]
+  }
+}
