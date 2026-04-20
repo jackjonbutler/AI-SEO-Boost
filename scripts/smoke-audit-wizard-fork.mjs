@@ -1,9 +1,9 @@
 /**
  * scripts/smoke-audit-wizard-fork.mjs
  *
- * Smoke test for the audit_ai_seo wizard-fork feature (Phases 7, 8, 9).
+ * Smoke test for the audit_ai_seo wizard-fork feature (Phases 7, 8, 9, 10).
  *
- * Exercises nine scenarios against the real audit_ai_seo handler via an
+ * Exercises ten scenarios against the real audit_ai_seo handler via an
  * in-process MCP Client<->Server pair backed by InMemoryTransport:
  *
  *   Scenario A — Wizard path, accept-all:  client accepts mode='wizard', accepts all issues, accepts gap-fills
@@ -15,6 +15,7 @@
  *   Scenario G — CTX-01 upfront context:   full businessContext provided; no businessContext keys in gap-fills
  *   Scenario H — CTX-02 lazy gather:       no upfront context; fields asked lazily when needed by tool
  *   Scenario I — CTX-03 carry-forward:     no upfront context; gap-fill schemas have disjoint key sets
+ *   Scenario J — Phase 10 full execution:  wizard → accept-all → gap-fills → tool execution → session summary
  *
  * Run after `npm run build`:
  *   node scripts/smoke-audit-wizard-fork.mjs
@@ -79,14 +80,15 @@ function synthesizeGapFillResponse(req, seen) {
 }
 
 // ---------------------------------------------------------------------------
-// Scenario A: Wizard path — accept all selected issues (Phase 9 updated)
+// Scenario A: Wizard path — accept all (Phase 10 — full wizard pipeline)
 // Client advertises elicitation capability.
 // Call 1: mode='wizard'. Call 2: accept all pre-selected issues.
-// Calls 3+: generic gap-fill accept (Phase 9 accumulator may ask for tool fields).
-// Asserts the response contains the Phase 9 envelope with all four keys.
+// Calls 3+: generic gap-fill accept (Phase 9 accumulator asks for tool fields).
+// Per-tool confirmation calls: respond with { acknowledged: 'yes' }.
+// Asserts the response is plain-text session summary containing 'Wizard complete'.
 // ---------------------------------------------------------------------------
 async function scenarioA() {
-  const label = 'Scenario A (wizard path — accept-all, Phase 9 envelope)';
+  const label = 'Scenario A (Phase 10 — full wizard pipeline, plain-text summary)';
   const server = createServer();
   const client = await connect(
     server,
@@ -94,10 +96,17 @@ async function scenarioA() {
     { capabilities: { elicitation: { form: {} } } },
   );
 
-  // Stateful handler: call 1 = mode fork, call 2 = issue selection, calls 3+ = gap-fills.
+  // Stateful handler: call 1 = mode fork, call 2 = issue selection, calls 3+ = gap-fills or confirmations.
   let callCount = 0;
   client.setRequestHandler(ElicitRequestSchema, async (req) => {
     callCount += 1;
+    const message = req.params?.message ?? '';
+    const props = req.params?.requestedSchema?.properties ?? {};
+
+    // Per-tool confirmation: 'Fix applied:' in message
+    if (message.includes('Fix applied:')) {
+      return { action: 'accept', content: { acknowledged: 'yes' } };
+    }
     if (callCount === 1) {
       // First call: mode fork — choose wizard
       return { action: 'accept', content: { mode: 'wizard' } };
@@ -119,27 +128,18 @@ async function scenarioA() {
   assert(!result.isError, label, `tool returned isError=true: ${JSON.stringify(result.content)}`);
   const text = result.content[0]?.text ?? '';
   assert(
-    text.includes('Context accumulation complete — tool execution lands in Phase 10'),
+    text.includes('Wizard complete'),
     label,
-    `response missing Phase 9 marker. Got: ${text.slice(0, 300)}`,
+    `response missing 'Wizard complete' summary. Got: ${text.slice(0, 300)}`,
   );
-  let parsed;
-  try {
-    parsed = JSON.parse(text);
-  } catch (e) {
-    assert(false, label, `response is not valid JSON: ${text.slice(0, 300)}`);
-  }
-  assert(Array.isArray(parsed.selectedFindings), label, `parsed response missing 'selectedFindings' array. Got keys: ${Object.keys(parsed).join(', ')}`);
-  assert(Array.isArray(parsed.skippedFindings), label, `parsed response missing 'skippedFindings' array. Got keys: ${Object.keys(parsed).join(', ')}`);
-  assert(typeof parsed.accumulatedContext === 'object' && parsed.accumulatedContext !== null, label, `parsed response missing 'accumulatedContext' object`);
-  assert(typeof parsed.contextSummary === 'string', label, `parsed response missing 'contextSummary' string`);
   assert(
-    parsed.selectedFindings.length > 0,
+    !text.startsWith('{'),
     label,
-    `selectedFindings is empty — expected at least one actionable finding from repo audit`,
+    `response should be plain text, not JSON. Got: ${text.slice(0, 100)}`,
   );
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -183,6 +183,7 @@ async function scenarioB() {
   assert('findings' in parsed, label, `parsed response missing 'findings' key`);
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -217,6 +218,7 @@ async function scenarioC() {
   assert('findings' in parsed, label, `parsed response missing 'findings' key`);
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +264,7 @@ async function scenarioD() {
   );
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -302,6 +305,7 @@ async function scenarioE() {
   );
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -324,6 +328,7 @@ async function scenarioF() {
     label,
     'all-pass short-circuit condition not found in src/tools/index.ts',
   );
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -350,6 +355,12 @@ async function scenarioG() {
   let callCount = 0;
   client.setRequestHandler(ElicitRequestSchema, async (req) => {
     callCount += 1;
+    const message = req.params?.message ?? '';
+
+    // Per-tool confirmation: 'Fix applied:' in message
+    if (message.includes('Fix applied:')) {
+      return { action: 'accept', content: { acknowledged: 'yes' } };
+    }
     if (callCount === 1) {
       return { action: 'accept', content: { mode: 'wizard' } };
     }
@@ -388,21 +399,18 @@ async function scenarioG() {
   assert(!result.isError, label, `tool returned isError: ${JSON.stringify(result.content)}`);
   const text = result.content[0]?.text ?? '';
   assert(
-    text.includes('Context accumulation complete'),
+    text.includes('Wizard complete'),
     label,
-    `Phase 9 marker missing. Got: ${text.slice(0, 200)}`,
+    `response missing 'Wizard complete' summary. Got: ${text.slice(0, 200)}`,
   );
-  let parsed;
-  try { parsed = JSON.parse(text); } catch (e) {
-    assert(false, label, `response is not valid JSON: ${text.slice(0, 300)}`);
-  }
   assert(
-    parsed.accumulatedContext?.businessName === 'Acme Wraps',
+    !text.startsWith('{'),
     label,
-    `accumulatedContext.businessName should be 'Acme Wraps', got: ${parsed.accumulatedContext?.businessName}`,
+    `response should be plain text, not JSON. Got: ${text.slice(0, 100)}`,
   );
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -422,10 +430,15 @@ async function scenarioH() {
 
   let callCount = 0;
   let businessNameAskCount = 0;
-  const allPropertiesSeen = [];
 
   client.setRequestHandler(ElicitRequestSchema, async (req) => {
     callCount += 1;
+    const message = req.params?.message ?? '';
+
+    // Per-tool confirmation: 'Fix applied:' in message
+    if (message.includes('Fix applied:')) {
+      return { action: 'accept', content: { acknowledged: 'yes' } };
+    }
     if (callCount === 1) {
       return { action: 'accept', content: { mode: 'wizard' } };
     }
@@ -436,7 +449,6 @@ async function scenarioH() {
     // Call 3+: track all properties seen
     const props = req.params?.requestedSchema?.properties ?? {};
     const keys = Object.keys(props);
-    allPropertiesSeen.push(...keys);
     if (keys.includes('businessName')) businessNameAskCount += 1;
     return synthesizeGapFillResponse(req, null);
   });
@@ -449,50 +461,25 @@ async function scenarioH() {
   assert(!result.isError, label, `tool returned isError: ${JSON.stringify(result.content)}`);
   const text = result.content[0]?.text ?? '';
   assert(
-    text.includes('Context accumulation complete'),
+    text.includes('Wizard complete'),
     label,
-    `Phase 9 marker missing. Got: ${text.slice(0, 200)}`,
+    `response missing 'Wizard complete' summary. Got: ${text.slice(0, 200)}`,
   );
-  let parsed;
-  try { parsed = JSON.parse(text); } catch (e) {
-    assert(false, label, `response is not valid JSON: ${text.slice(0, 300)}`);
-  }
+  assert(
+    !text.startsWith('{'),
+    label,
+    `response should be plain text, not JSON. Got: ${text.slice(0, 100)}`,
+  );
 
-  // Determine which tools fired — if any of the businessName-requiring tools appeared,
-  // businessName should have been asked exactly once
-  const contextTools = new Set(['generate_llms_txt', 'generate_schema_markup', 'generate_faq_content']);
-  const contextToolFired = parsed.selectedFindings?.some(
-    (f) => f.suggestedToolCall && contextTools.has(f.suggestedToolCall),
-  ) ?? false;
-
-  if (contextToolFired) {
-    assert(
-      businessNameAskCount >= 1,
-      label,
-      `businessName should have been asked at least once (contextToolFired=true), but was not asked`,
-    );
-    assert(
-      businessNameAskCount === 1,
-      label,
-      `businessName was asked ${businessNameAskCount} times — should be asked exactly once (CTX-03 carry-forward)`,
-    );
-    // Verify the accumulated context received the placeholder value
-    assert(
-      parsed.accumulatedContext?.businessName === '/tmp/smoke-placeholder',
-      label,
-      `accumulatedContext.businessName should be '/tmp/smoke-placeholder', got: ${parsed.accumulatedContext?.businessName}`,
-    );
-  }
-  // If no contextTool fired, businessName should not have been asked
-  if (!contextToolFired) {
-    assert(
-      businessNameAskCount === 0,
-      label,
-      `businessName asked ${businessNameAskCount} times despite no contextTool firing`,
-    );
-  }
+  // businessName should be asked at most once (CTX-03 carry-forward)
+  assert(
+    businessNameAskCount <= 1,
+    label,
+    `businessName was asked ${businessNameAskCount} times — should be asked at most once (CTX-03 carry-forward)`,
+  );
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
@@ -514,6 +501,12 @@ async function scenarioI() {
 
   client.setRequestHandler(ElicitRequestSchema, async (req) => {
     callCount += 1;
+    const message = req.params?.message ?? '';
+
+    // Per-tool confirmation: 'Fix applied:' in message
+    if (message.includes('Fix applied:')) {
+      return { action: 'accept', content: { acknowledged: 'yes' } };
+    }
     if (callCount === 1) {
       return { action: 'accept', content: { mode: 'wizard' } };
     }
@@ -542,19 +535,97 @@ async function scenarioI() {
   assert(!result.isError, label, `tool returned isError: ${JSON.stringify(result.content)}`);
   const text = result.content[0]?.text ?? '';
   assert(
-    text.includes('Context accumulation complete'),
+    text.includes('Wizard complete'),
     label,
-    `Phase 9 marker missing. Got: ${text.slice(0, 200)}`,
+    `response missing 'Wizard complete' summary. Got: ${text.slice(0, 200)}`,
+  );
+  assert(
+    !text.startsWith('{'),
+    label,
+    `response should be plain text, not JSON. Got: ${text.slice(0, 100)}`,
   );
 
   await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
+}
+
+// ---------------------------------------------------------------------------
+// Scenario J: Phase 10 — end-to-end execution, plain-text session summary
+// Exercises the full Phase 10 path: wizard → accept-all → gap-fills with /tmp
+// paths for file-writing tools → per-tool confirmation → plain-text summary.
+// ---------------------------------------------------------------------------
+async function scenarioJ() {
+  const label = 'Scenario J (Phase 10 — end-to-end execution, plain-text session summary)';
+  const server = createServer();
+  const client = await connect(
+    server,
+    { name: 'smoke-j', version: '0.0.0' },
+    { capabilities: { elicitation: { form: {} } } },
+  );
+
+  let callCount = 0;
+
+  client.setRequestHandler(ElicitRequestSchema, async (req) => {
+    callCount += 1;
+    const message = req.params?.message ?? '';
+    const props = req.params?.requestedSchema?.properties ?? {};
+
+    // Per-tool confirmation: 'Fix applied:' in message
+    if (message.includes('Fix applied:')) {
+      return { action: 'accept', content: { acknowledged: 'yes' } };
+    }
+
+    // Call 1: wizard/report fork — choose wizard
+    if ('mode' in props) {
+      return { action: 'accept', content: { mode: 'wizard' } };
+    }
+
+    // Call 2: issue selection multi-select — accept all
+    if ('selectedIssues' in props) {
+      const defaultSelection = props.selectedIssues?.default ?? [];
+      return { action: 'accept', content: { selectedIssues: defaultSelection } };
+    }
+
+    // Calls 3+: gap-fill — provide /tmp paths for file-writing fields
+    const content = {};
+    for (const [key, schema] of Object.entries(props)) {
+      if (schema && schema.type === 'array') {
+        content[key] = ['LocalBusiness'];
+      } else if (key === 'outputPath') {
+        content[key] = '/tmp/smoke-wizard-j/llms.txt';
+      } else if (key === 'robotsPath') {
+        content[key] = '/tmp/smoke-wizard-j/robots.txt';
+      } else if (key === 'outputDir') {
+        content[key] = '/tmp/smoke-wizard-j/mirrors/';
+      } else if (key.includes('Path') || key.includes('Dir')) {
+        content[key] = '/tmp/smoke-wizard-j/' + key;
+      } else {
+        content[key] = '/tmp/smoke-placeholder';
+      }
+    }
+    return { action: 'accept', content };
+  });
+
+  const result = await client.callTool({
+    name: 'audit_ai_seo',
+    arguments: { target: process.cwd() },
+  });
+
+  assert(!result.isError, label, `tool returned isError=true: ${JSON.stringify(result.content)}`);
+  const text = result.content[0]?.text ?? '';
+  assert(typeof text === 'string', label + ': response must be a string', '');
+  assert(text.includes('Wizard complete'), label, `response must contain session summary. Got: ${text.slice(0, 300)}`);
+  assert(!text.startsWith('{'), label, `response must be plain text, not JSON. Got: ${text.slice(0, 100)}`);
+
+  await client.close();
+  process.stdout.write(`SMOKE OK: ${label}\n`);
 }
 
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
-  await scenarioA();   // wizard accept-all (Phase 9 envelope)
+  await scenarioA();   // wizard accept-all (Phase 10 — full wizard pipeline, plain-text summary)
   await scenarioB();   // report path
   await scenarioC();   // elicitation-unsupported fallback
   await scenarioD();   // wizard deselect-all
@@ -563,7 +634,7 @@ async function main() {
   await scenarioG();   // CTX-01 upfront context — no businessContext re-ask
   await scenarioH();   // CTX-02 lazy gather — no upfront context
   await scenarioI();   // CTX-03 carry-forward — disjoint gap-fill schemas
-  process.stdout.write('SMOKE OK\n');
+  await scenarioJ();   // Phase 10 full execution: wizard → accept-all → gap-fills → tool execution → session summary
 }
 
 main().catch((err) => {
