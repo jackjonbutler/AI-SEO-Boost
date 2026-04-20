@@ -34,6 +34,8 @@ node dist/index.js
 
 If `node dist/index.js` exits immediately with an error, the build failed. Re-run `npm run build` and check the TypeScript output.
 
+> **Why it hangs:** The server uses the MCP stdio transport — it reads JSON-RPC messages from stdin. A hanging process is the correct "server is running" state. An immediate exit means the build is broken or `dist/index.js` is missing.
+
 ---
 
 ## Configuration
