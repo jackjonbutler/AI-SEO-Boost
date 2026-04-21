@@ -79,6 +79,13 @@ Plans:
 3. A detected WordPress site produces llms.txt and robots.txt fix suggestions that mention `/wp-content/` upload paths; a detected Nuxt/Next.js site produces suggestions mentioning `/public/` and redeployment
 4. Framework detection never asserts a framework from a single weak signal — at least two independent asset-path signals are required before `confidence` is set to `"high"`
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Add FrameworkDetection types to src/audit/types.ts + create src/audit/framework.ts with detectFramework() pure function and fetchAndDetectFramework() I/O wrapper
+- [ ] 12-02-PLAN.md — Extend checkLlmsTxt / checkRobotsTxtAiAccess / checkMarkdownMirrors with optional framework parameter and framework-aware placement notes on fail paths
+- [ ] 12-03-PLAN.md — Wire fetchAndDetectFramework into runAudit(), pass detected framework to framework-aware dimensions, surface on AuditReport.framework, and verify end-to-end with smoke-phase12-framework.mjs
+
 ---
 
 #### Phase 13: Schema Type Inference
@@ -152,7 +159,7 @@ Plans:
 | 9. Context Accumulation | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 10. Tool Execution Engine | v1.1 | 2/2 | Complete | 2026-04-20 |
 | 11. HTTP Diagnostic Metadata Capture | v1.2 | 3/3 | Complete | 2026-04-21 |
-| 12. Framework Detection | v1.2 | 0/? | Planned | — |
+| 12. Framework Detection | v1.2 | 0/3 | Planned | — |
 | 13. Schema Type Inference | v1.2 | 0/? | Planned | — |
 | 14. Sitemap Coverage and Mirror Depth | v1.2 | 0/? | Planned | — |
 | 15. Wizard Integration and Type Safety | v1.2 | 0/? | Planned | — |
