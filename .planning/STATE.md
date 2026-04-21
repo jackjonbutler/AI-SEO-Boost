@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 ## Current Position
 
 Phase: 12 — Framework Detection
-Plan: 02 of 03 complete
-Status: In progress — Plans 01 and 02 done, Plan 03 pending
-Last activity: 2026-04-21 — Completed 12-02-PLAN.md (framework-aware fix suggestions in llms-txt, robots-txt, markdown dimensions)
+Plan: 03 of 03 complete
+Status: Phase complete — all 3 plans done, FWK-01/02/03 closed
+Last activity: 2026-04-21 — Completed 12-03-PLAN.md (wired fetchAndDetectFramework into runAudit, all Phase 12 criteria verified)
 
-Progress: [██░░░░░░░░░░░░░] 1/5 phases complete (Phase 11 complete, Phase 12 in progress — 2/3 plans done)
+Progress: [███░░░░░░░░░░░░] 2/5 phases complete (Phases 11 and 12 complete, Phase 13 next)
 
 ## Performance Metrics
 
@@ -84,6 +84,9 @@ Recent decisions affecting v1.2 work:
 - Phase 12-02: buildPlacementNote helpers are module-scope pure functions — no I/O, easily unit-testable
 - Phase 12-02: llms.txt fallback returns generic 'Place in site root' message (non-empty); robots.txt and markdown fallbacks return '' (existing messages self-sufficient)
 - Phase 12-02: null/undefined framework accepted via FrameworkDetection | null | undefined union — matches fetchAndDetectFramework() return type
+- Phase 12-03: resolve framework before dimension Promise.all (not inside it) — Approach A (param passing) requires framework at message-construction time; correctness wins over 1 extra RT
+- Phase 12-03: checkSchemaMarkup and checkFaq remain single-arg — not framework-aware; their messages don't vary by framework
+- Phase 12-03: AuditReport.framework is optional field — zero breaking changes to wizard or existing callers
 
 ### v1.2 Architecture Notes (from research)
 
@@ -107,5 +110,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 12-02 — framework-aware placement note helpers added to checkLlmsTxt, checkRobotsTxtAiAccess, checkMarkdownMirrors
-Next: Execute Phase 12 Plan 03 — wire fetchAndDetectFramework() into runAudit() and pass framework to dimension checks
+Stopped at: Completed 12-03 — runAudit() wired with framework detection; AuditReport.framework populated; smoke-phase12-framework.mjs verified all 4 Phase 12 success criteria
+Next: Execute Phase 13 — Schema Type Inference (new src/audit/schema-type-map.ts)
