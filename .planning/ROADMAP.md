@@ -131,7 +131,7 @@ Plans:
 
 ---
 
-- [ ] Phase 11: HTTP Diagnostic Metadata Capture — 3 plans ready
+- [x] Phase 11: HTTP Diagnostic Metadata Capture — completed 2026-04-21
 - [ ] Phase 12: Framework Detection — Planned
 - [ ] Phase 13: Schema Type Inference — Planned
 - [ ] Phase 14: Sitemap Coverage and Mirror Depth — Planned
@@ -151,7 +151,7 @@ Plans:
 | 8. Issue Selection | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 9. Context Accumulation | v1.1 | 1/1 | Complete | 2026-04-20 |
 | 10. Tool Execution Engine | v1.1 | 2/2 | Complete | 2026-04-20 |
-| 11. HTTP Diagnostic Metadata Capture | v1.2 | 0/3 | Planned | — |
+| 11. HTTP Diagnostic Metadata Capture | v1.2 | 3/3 | Complete | 2026-04-21 |
 | 12. Framework Detection | v1.2 | 0/? | Planned | — |
 | 13. Schema Type Inference | v1.2 | 0/? | Planned | — |
 | 14. Sitemap Coverage and Mirror Depth | v1.2 | 0/? | Planned | — |
