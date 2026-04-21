@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 ## Current Position
 
-Phase: 14 — Sitemap Coverage and Mirror Depth
-Plan: 02 of 02 complete
-Status: Phase complete — COV-01/COV-02/COV-03 closed; regression gate added
-Last activity: 2026-04-21 — Completed 14-02-PLAN.md (offline smoke regression gate for all four Phase 14 success criteria; all [PASS])
+Phase: 15 — Wizard Integration and Type Safety
+Plan: 01 of 02 complete
+Status: In progress — WIZ-01 type foundation complete; Plan 02 next
+Last activity: 2026-04-21 — Completed 15-01-PLAN.md (SuggestedToolCall union, narrowed AuditFinding.suggestedToolCall, robots-txt missingBots enrichment)
 
-Progress: [█████░░░░░░░░░░] 4/5 phases complete (Phases 11, 12, 13, and 14 complete, Phase 15 next)
+Progress: [█████░░░░░░░░░░] 4/5 phases complete (Phases 11, 12, 13, and 14 complete, Phase 15 in progress)
 
 ## Performance Metrics
 
@@ -98,6 +98,9 @@ Recent decisions affecting v1.2 work:
 - Phase 14-01: Coverage in message string only — AuditFindingDiagnostics.checkedUrl is singular string, not array; no types.ts changes
 - Phase 14-01: null sentinel from fetchSitemapUrls = no sitemap/unreachable (warning); [] = empty sitemap (warning); string[] = run coverage
 - Phase 14-01: Thresholds: 100% sampled → pass, 1-99% → warning, 0% → fail
+- Phase 15-01: SuggestedToolCall is a plain string-literal union in src/audit/types.ts (not const enum/runtime array) — consistent with Severity and AuditDimension; zero runtime cost
+- Phase 15-01: SuggestedToolCall placed in src/audit/types.ts not src/types/index.ts — audit-domain-scoped; avoids leaf-node import cycle
+- Phase 15-01: suggestedToolCallArgs.missingBots added only to missing.length > 0 fail paths in robots-txt.ts — 404/ENOENT paths have no missing array; tool re-detects from disk at execution time
 
 ### v1.2 Architecture Notes (from research)
 
@@ -121,5 +124,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 14-02 — offline smoke regression gate; all four COV scenarios pass; phase 14 fully closed
-Next: Phase 15 — Wizard Type Narrowing (WIZ-01)
+Stopped at: Completed 15-01 — SuggestedToolCall union + AuditFinding narrowing + robots-txt missingBots enrichment; tsc clean
+Next: Phase 15 Plan 02 — dispatch-table refactor and accumulator pre-seeding in tools/index.ts
