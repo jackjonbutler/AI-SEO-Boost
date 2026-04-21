@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { AI_BOTS } from '../../generators/files/robots-txt.js';
 import { isUrl, originFor } from '../types.js';
-import type { AuditFinding, AuditFindingDiagnostics } from '../types.js';
+import type { AuditFinding, AuditFindingDiagnostics, FrameworkDetection } from '../types.js';
 
 // Re-export so audit consumers can reference the canonical list.
 export { AI_BOTS } from '../../generators/files/robots-txt.js';
@@ -15,7 +15,29 @@ function botAlreadyPresent(content: string, botName: string): boolean {
   return new RegExp(`^\\s*user-agent:\\s*${botName}\\s*$`, 'im').test(content);
 }
 
-export async function checkRobotsTxtAiAccess(target: string): Promise<AuditFinding> {
+function buildRobotsTxtPlacementNote(fw: FrameworkDetection | null | undefined): string {
+  if (!fw || !fw.name) return '';
+  switch (fw.name) {
+    case 'WordPress':
+      return ' For WordPress: place robots.txt at your web root (e.g. /var/www/html/robots.txt) — not inside /wp-content/.';
+    case 'Next.js':
+    case 'Nuxt':
+    case 'Astro':
+      return ' For this framework: place robots.txt in /public/ and redeploy.';
+    case 'Shopify':
+      return ' For Shopify: robots.txt is managed via Online Store > Preferences > robots.txt in the Shopify admin.';
+    case 'Hugo':
+    case 'Jekyll':
+      return ' Place robots.txt in your site root (static files folder) and rebuild.';
+    default:
+      return '';
+  }
+}
+
+export async function checkRobotsTxtAiAccess(
+  target: string,
+  framework?: FrameworkDetection | null
+): Promise<AuditFinding> {
   const dimension = 'robots-ai' as const;
   try {
     if (isUrl(target)) {
@@ -40,7 +62,7 @@ export async function checkRobotsTxtAiAccess(target: string): Promise<AuditFindi
             dimension,
             status: 'fail',
             severity: 'high',
-            message: 'robots.txt not found (404) — no AI crawler rules defined',
+            message: `robots.txt not found (404) — no AI crawler rules defined.${buildRobotsTxtPlacementNote(framework)}`,
             suggestedToolCall: 'configure_robots_txt',
             diagnostics,
           };
@@ -53,7 +75,7 @@ export async function checkRobotsTxtAiAccess(target: string): Promise<AuditFindi
           dimension,
           status: 'fail',
           severity: 'high',
-          message: `Missing AI crawler rules for: ${missing.join(', ')}`,
+          message: `Missing AI crawler rules for: ${missing.join(', ')}.${buildRobotsTxtPlacementNote(framework)}`,
           suggestedToolCall: 'configure_robots_txt',
           diagnostics,
         };
@@ -74,7 +96,7 @@ export async function checkRobotsTxtAiAccess(target: string): Promise<AuditFindi
           dimension,
           status: 'fail',
           severity: 'high',
-          message: 'robots.txt not found in folder root — no AI crawler rules defined',
+          message: `robots.txt not found in folder root — no AI crawler rules defined.${buildRobotsTxtPlacementNote(framework)}`,
           suggestedToolCall: 'configure_robots_txt',
         };
       }
@@ -89,7 +111,7 @@ export async function checkRobotsTxtAiAccess(target: string): Promise<AuditFindi
       dimension,
       status: 'fail',
       severity: 'high',
-      message: `Missing AI crawler rules for: ${missing.join(', ')}`,
+      message: `Missing AI crawler rules for: ${missing.join(', ')}.${buildRobotsTxtPlacementNote(framework)}`,
       suggestedToolCall: 'configure_robots_txt',
     };
   } catch (err) {
