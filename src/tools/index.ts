@@ -251,7 +251,20 @@ export function registerAllTools(server: McpServer): void {
         for (const finding of selectedFindings) {
           // Guard: findings without a known fixing tool are skipped silently (Pitfall 4)
           const toolName = finding.suggestedToolCall;
-          if (!toolName || !TOOL_FIELD_MAP[toolName]) continue;
+          if (!toolName) continue;
+
+          // Phase 15 WIZ-02: Pre-seed acc from args the audit already captured,
+          // so the gap-fill loop never asks for values the audit already knows.
+          // Guards prevent overwriting user-supplied values from earlier iterations.
+          if (finding.suggestedToolCallArgs) {
+            const args = finding.suggestedToolCallArgs;
+            if (typeof args['recommendedType'] === 'string' && !acc.schemaTypes) {
+              acc.schemaTypes = [args['recommendedType'] as string];
+            }
+            // Note: robots-txt's missingBots payload is informational only — it does
+            // not map to any AccumulatedContext field (patchRobotsTxt re-detects
+            // missing bots from disk at execution time). Not seeded.
+          }
 
           const fieldSpec = TOOL_FIELD_MAP[toolName];
 
@@ -366,178 +379,166 @@ export function registerAllTools(server: McpServer): void {
         const fixResults: string[] = [];
         const fixErrors: string[] = [];
 
+        // Phase 15 WIZ-01: Typed dispatch table. Record<SuggestedToolCall, FixHandler>
+        // enforces completeness at compile time — adding a new SuggestedToolCall
+        // member without a handler here is a compile error.
+        // Declared inside registerAllTools so handlers close over acc, fixResults,
+        // fixErrors, target, and server from the surrounding scope (RESEARCH.md Pitfall 4).
+        type FixHandler = (finding: AuditFinding) => Promise<void>;
+
+        const dispatchTable: Record<SuggestedToolCall, FixHandler> = {
+          generate_llms_txt: async (_finding) => {
+            const ctx = acc as BusinessContext;
+            const content = buildLlmsTxt(ctx);
+            await writeFile(acc.outputPath!, content, 'utf-8');
+            fixResults.push('llms.txt written to ' + acc.outputPath + ' (' + content.length + ' bytes)');
+            try {
+              await server.server.elicitInput({
+                mode: 'form',
+                message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                requestedSchema: {
+                  type: 'object',
+                  properties: {
+                    acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                  },
+                  required: ['acknowledged'],
+                },
+              });
+            } catch {
+              // Non-elicitation client — silently continue
+            }
+          },
+
+          configure_robots_txt: async (_finding) => {
+            const result = await patchRobotsTxt(acc.robotsPath!, acc.sitemapUrl);
+            const parts: string[] = [];
+            if (result.botsAdded.length > 0) {
+              parts.push('Added ' + result.botsAdded.length + ' bot allow-rule(s): ' + result.botsAdded.join(', '));
+            } else {
+              parts.push('All AI bot allow-rules already present');
+            }
+            if (result.sitemapAdded) {
+              parts.push('Added Sitemap: ' + acc.sitemapUrl);
+            }
+            fixResults.push('robots.txt — ' + parts.join('; '));
+            try {
+              await server.server.elicitInput({
+                mode: 'form',
+                message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                requestedSchema: {
+                  type: 'object',
+                  properties: {
+                    acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                  },
+                  required: ['acknowledged'],
+                },
+              });
+            } catch {
+              // Non-elicitation client — silently continue
+            }
+          },
+
+          generate_schema_markup: async (_finding) => {
+            const ctx = acc as BusinessContext;
+            const blocks = buildSchemaMarkup(ctx, acc.schemaTypes as SchemaType[]);
+            fixResults.push('schema markup generated (' + blocks.length + ' block(s) — copy JSON-LD into <head>):\n' + blocks.join('\n\n'));
+            try {
+              await server.server.elicitInput({
+                mode: 'form',
+                message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                requestedSchema: {
+                  type: 'object',
+                  properties: {
+                    acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                  },
+                  required: ['acknowledged'],
+                },
+              });
+            } catch {
+              // Non-elicitation client — silently continue
+            }
+          },
+
+          generate_faq_content: async (_finding) => {
+            const ctx = acc as BusinessContext;
+            const pairs = buildFaqContent(ctx);
+            fixResults.push('FAQ content generated (' + pairs.length + ' pairs):\n' + JSON.stringify(pairs, null, 2));
+            try {
+              await server.server.elicitInput({
+                mode: 'form',
+                message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                requestedSchema: {
+                  type: 'object',
+                  properties: {
+                    acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                  },
+                  required: ['acknowledged'],
+                },
+              });
+            } catch {
+              // Non-elicitation client — silently continue
+            }
+          },
+
+          generate_markdown_mirrors: async (_finding) => {
+            const t = target.trim();
+            const isUrlTarget = t.startsWith('http://') || t.startsWith('https://');
+            const results = isUrlTarget ? await crawlUrl(t) : await acquireLocal(t);
+            const docs: MarkdownDocument[] = results.filter((r): r is MarkdownDocument => !isAcquisitionError(r));
+            if (docs.length === 0) {
+              fixErrors.push('generate_markdown_mirrors: no pages acquired from ' + t);
+              return;
+            }
+            const dir = acc.outputDir!;
+            const writtenSlugs = new Set<string>();
+            const disambiguate = (slug: string): string => {
+              if (!writtenSlugs.has(slug)) { writtenSlugs.add(slug); return slug; }
+              let n = 2;
+              while (writtenSlugs.has(`${slug}-${n}`)) n++;
+              const unique = `${slug}-${n}`;
+              writtenSlugs.add(unique);
+              return unique;
+            };
+            const limit = pLimit(5);
+            const writes = docs.map((doc) => limit(async () => {
+              const { slug, content } = buildMarkdownMirror(doc);
+              const finalSlug = disambiguate(slug);
+              const filePath = finalSlug === 'index'
+                ? path.join(dir, 'index.md')
+                : path.join(dir, finalSlug, 'index.md');
+              await mkdir(path.dirname(filePath), { recursive: true });
+              await writeFile(filePath, content, 'utf-8');
+              return filePath;
+            }));
+            const written = await Promise.all(writes);
+            fixResults.push(written.length + ' markdown mirror(s) written under ' + acc.outputDir!);
+            try {
+              await server.server.elicitInput({
+                mode: 'form',
+                message: 'Fix applied: ' + fixResults[fixResults.length - 1],
+                requestedSchema: {
+                  type: 'object',
+                  properties: {
+                    acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
+                  },
+                  required: ['acknowledged'],
+                },
+              });
+            } catch {
+              // Non-elicitation client — silently continue
+            }
+          },
+        };
+
         for (const finding of selectedFindings) {
           if (skippedFindings.includes(finding.dimension)) continue;
           const toolName = finding.suggestedToolCall;
-          if (!toolName || !TOOL_FIELD_MAP[toolName]) continue;
+          if (!toolName) continue;
 
-          switch (toolName) {
-            case 'generate_llms_txt': {
-              try {
-                const ctx = acc as BusinessContext;
-                const content = buildLlmsTxt(ctx);
-                await writeFile(acc.outputPath!, content, 'utf-8');
-                fixResults.push('llms.txt written to ' + acc.outputPath + ' (' + content.length + ' bytes)');
-                try {
-                  await server.server.elicitInput({
-                    mode: 'form',
-                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
-                    requestedSchema: {
-                      type: 'object',
-                      properties: {
-                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
-                      },
-                      required: ['acknowledged'],
-                    },
-                  });
-                } catch {
-                  // Non-elicitation client — silently continue
-                }
-              } catch (toolErr) {
-                fixErrors.push('generate_llms_txt: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
-              }
-              break;
-            }
-
-            case 'configure_robots_txt': {
-              try {
-                const result = await patchRobotsTxt(acc.robotsPath!, acc.sitemapUrl);
-                const parts: string[] = [];
-                if (result.botsAdded.length > 0) {
-                  parts.push('Added ' + result.botsAdded.length + ' bot allow-rule(s): ' + result.botsAdded.join(', '));
-                } else {
-                  parts.push('All AI bot allow-rules already present');
-                }
-                if (result.sitemapAdded) {
-                  parts.push('Added Sitemap: ' + acc.sitemapUrl);
-                }
-                fixResults.push('robots.txt — ' + parts.join('; '));
-                try {
-                  await server.server.elicitInput({
-                    mode: 'form',
-                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
-                    requestedSchema: {
-                      type: 'object',
-                      properties: {
-                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
-                      },
-                      required: ['acknowledged'],
-                    },
-                  });
-                } catch {
-                  // Non-elicitation client — silently continue
-                }
-              } catch (toolErr) {
-                fixErrors.push('configure_robots_txt: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
-              }
-              break;
-            }
-
-            case 'generate_schema_markup': {
-              try {
-                const ctx = acc as BusinessContext;
-                const blocks = buildSchemaMarkup(ctx, acc.schemaTypes as SchemaType[]);
-                fixResults.push('schema markup generated (' + blocks.length + ' block(s) — copy JSON-LD into <head>):\n' + blocks.join('\n\n'));
-                try {
-                  await server.server.elicitInput({
-                    mode: 'form',
-                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
-                    requestedSchema: {
-                      type: 'object',
-                      properties: {
-                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
-                      },
-                      required: ['acknowledged'],
-                    },
-                  });
-                } catch {
-                  // Non-elicitation client — silently continue
-                }
-              } catch (toolErr) {
-                fixErrors.push('generate_schema_markup: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
-              }
-              break;
-            }
-
-            case 'generate_faq_content': {
-              try {
-                const ctx = acc as BusinessContext;
-                const pairs = buildFaqContent(ctx);
-                fixResults.push('FAQ content generated (' + pairs.length + ' pairs):\n' + JSON.stringify(pairs, null, 2));
-                try {
-                  await server.server.elicitInput({
-                    mode: 'form',
-                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
-                    requestedSchema: {
-                      type: 'object',
-                      properties: {
-                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
-                      },
-                      required: ['acknowledged'],
-                    },
-                  });
-                } catch {
-                  // Non-elicitation client — silently continue
-                }
-              } catch (toolErr) {
-                fixErrors.push('generate_faq_content: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
-              }
-              break;
-            }
-
-            case 'generate_markdown_mirrors': {
-              try {
-                const t = target.trim();
-                const isUrl = t.startsWith('http://') || t.startsWith('https://');
-                const results = isUrl ? await crawlUrl(t) : await acquireLocal(t);
-                const docs: MarkdownDocument[] = results.filter((r): r is MarkdownDocument => !isAcquisitionError(r));
-                if (docs.length === 0) {
-                  fixErrors.push('generate_markdown_mirrors: no pages acquired from ' + t);
-                  break;
-                }
-                const dir = acc.outputDir!;
-                const writtenSlugs = new Set<string>();
-                const disambiguate = (slug: string): string => {
-                  if (!writtenSlugs.has(slug)) { writtenSlugs.add(slug); return slug; }
-                  let n = 2;
-                  while (writtenSlugs.has(`${slug}-${n}`)) n++;
-                  const unique = `${slug}-${n}`;
-                  writtenSlugs.add(unique);
-                  return unique;
-                };
-                const limit = pLimit(5);
-                const writes = docs.map((doc) => limit(async () => {
-                  const { slug, content } = buildMarkdownMirror(doc);
-                  const finalSlug = disambiguate(slug);
-                  const filePath = finalSlug === 'index'
-                    ? path.join(dir, 'index.md')
-                    : path.join(dir, finalSlug, 'index.md');
-                  await mkdir(path.dirname(filePath), { recursive: true });
-                  await writeFile(filePath, content, 'utf-8');
-                  return filePath;
-                }));
-                const written = await Promise.all(writes);
-                fixResults.push(written.length + ' markdown mirror(s) written under ' + acc.outputDir!);
-                try {
-                  await server.server.elicitInput({
-                    mode: 'form',
-                    message: 'Fix applied: ' + fixResults[fixResults.length - 1],
-                    requestedSchema: {
-                      type: 'object',
-                      properties: {
-                        acknowledged: { type: 'string', title: 'Continue', oneOf: [{ const: 'yes', title: 'OK' }] },
-                      },
-                      required: ['acknowledged'],
-                    },
-                  });
-                } catch {
-                  // Non-elicitation client — silently continue
-                }
-              } catch (toolErr) {
-                fixErrors.push('generate_markdown_mirrors: ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
-              }
-              break;
-            }
+          try {
+            await dispatchTable[toolName](finding);
+          } catch (toolErr) {
+            fixErrors.push(toolName + ': ' + (toolErr instanceof Error ? toolErr.message : String(toolErr)));
           }
         }
 
