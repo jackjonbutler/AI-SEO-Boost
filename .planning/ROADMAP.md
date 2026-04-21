@@ -153,7 +153,7 @@ Plans:
 - [x] Phase 11: HTTP Diagnostic Metadata Capture — completed 2026-04-21
 - [x] Phase 12: Framework Detection — completed 2026-04-21
 - [x] Phase 13: Schema Type Inference — completed 2026-04-21
-- [ ] Phase 14: Sitemap Coverage and Mirror Depth — Planned
+- [x] Phase 14: Sitemap Coverage and Mirror Depth — completed 2026-04-21
 - [ ] Phase 15: Wizard Integration and Type Safety — Planned
 
 ## Progress
@@ -173,5 +173,5 @@ Plans:
 | 11. HTTP Diagnostic Metadata Capture | v1.2 | 3/3 | Complete | 2026-04-21 |
 | 12. Framework Detection | v1.2 | 3/3 | Complete | 2026-04-21 |
 | 13. Schema Type Inference | v1.2 | 2/2 | Complete | 2026-04-21 |
-| 14. Sitemap Coverage and Mirror Depth | v1.2 | 0/2 | Planned | — |
+| 14. Sitemap Coverage and Mirror Depth | v1.2 | 2/2 | Complete | 2026-04-21 |
 | 15. Wizard Integration and Type Safety | v1.2 | 0/? | Planned | — |

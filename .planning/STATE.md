@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** v1.2 — Audit Observability & Framework Awareness — Phase 14 next
+**Current focus:** v1.2 — Audit Observability & Framework Awareness — Phase 15 next
 
 ## Current Position
 
