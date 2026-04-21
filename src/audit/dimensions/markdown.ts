@@ -4,9 +4,31 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { isUrl, originFor } from '../types.js';
-import type { AuditFinding } from '../types.js';
+import type { AuditFinding, FrameworkDetection } from '../types.js';
 
-export async function checkMarkdownMirrors(target: string): Promise<AuditFinding> {
+function buildMarkdownPlacementNote(fw: FrameworkDetection | null | undefined): string {
+  if (!fw || !fw.name) return '';
+  switch (fw.name) {
+    case 'Next.js':
+    case 'Nuxt':
+    case 'Astro':
+      return ' For this framework: generate mirrors into /public/ and redeploy — each page becomes /public/<slug>/index.md.';
+    case 'WordPress':
+      return ' For WordPress: upload mirrors to your site root via FTP — /wp-content/ is not web-accessible for markdown files by default.';
+    case 'Shopify':
+      return ' For Shopify: markdown mirrors require a custom route or page template — direct file placement is not supported.';
+    case 'Hugo':
+    case 'Jekyll':
+      return ' Place markdown mirrors in your content or static directory, rebuild, and deploy.';
+    default:
+      return '';
+  }
+}
+
+export async function checkMarkdownMirrors(
+  target: string,
+  framework?: FrameworkDetection | null
+): Promise<AuditFinding> {
   const dimension = 'markdown-mirrors' as const;
   try {
     if (isUrl(target)) {
@@ -25,7 +47,7 @@ export async function checkMarkdownMirrors(target: string): Promise<AuditFinding
         dimension,
         status: 'fail',
         severity: 'medium',
-        message: 'No markdown mirror found for home page',
+        message: `No markdown mirror found for home page.${buildMarkdownPlacementNote(framework)}`,
         suggestedToolCall: 'generate_markdown_mirrors',
       };
     }
@@ -41,7 +63,7 @@ export async function checkMarkdownMirrors(target: string): Promise<AuditFinding
         dimension,
         status: 'fail',
         severity: 'medium',
-        message: 'No markdown mirror files found in folder root',
+        message: `No markdown mirror files found in folder root.${buildMarkdownPlacementNote(framework)}`,
         suggestedToolCall: 'generate_markdown_mirrors',
       };
     } catch (readdirErr) {
