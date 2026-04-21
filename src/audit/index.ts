@@ -9,6 +9,7 @@ import { checkRobotsTxtAiAccess } from './dimensions/robots-txt.js';
 import { checkSchemaMarkup } from './dimensions/schema.js';
 import { checkFaq } from './dimensions/faq.js';
 import { checkMarkdownMirrors } from './dimensions/markdown.js';
+import { fetchAndDetectFramework } from './framework.js';
 
 export async function runAudit(target: string): Promise<AuditReport> {
   if (!target || typeof target !== 'string' || target.trim().length === 0) {
@@ -31,12 +32,16 @@ export async function runAudit(target: string): Promise<AuditReport> {
     probe = trimmed;
   }
 
+  // Framework detection runs first so its result can be passed to the 3 framework-aware dimensions.
+  // For local targets, fetchAndDetectFramework returns null immediately (no I/O cost).
+  const frameworkDetection = await fetchAndDetectFramework(probe);
+
   const findings = await Promise.all([
-    checkLlmsTxt(probe),
-    checkRobotsTxtAiAccess(probe),
+    checkLlmsTxt(probe, frameworkDetection),
+    checkRobotsTxtAiAccess(probe, frameworkDetection),
     checkSchemaMarkup(probe),
     checkFaq(probe),
-    checkMarkdownMirrors(probe),
+    checkMarkdownMirrors(probe, frameworkDetection),
   ]);
 
   // Collect URLs actually probed by dimension checks (DIAG-03).
@@ -55,5 +60,6 @@ export async function runAudit(target: string): Promise<AuditReport> {
     generatedAt: new Date().toISOString(),
     findings,
     pagesAudited,
+    framework: frameworkDetection,
   };
 }
