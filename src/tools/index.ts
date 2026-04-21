@@ -11,6 +11,7 @@ import type { BusinessContext } from "../types/index.js";
 import { buildLlmsTxt } from "../generators/files/llms-txt.js";
 import { patchRobotsTxt } from "../generators/files/robots-txt.js";
 import { runAudit } from "../audit/index.js";
+import type { SuggestedToolCall, AuditFinding } from "../audit/types.js";
 import { buildSitemapXml } from "../generators/files/sitemap-xml.js";
 import { buildMarkdownMirror } from "../generators/files/markdown-mirrors.js";
 import { buildSchemaMarkup } from "../generators/files/schema-markup.js";
@@ -57,7 +58,7 @@ type AccumulatedContext = Partial<BusinessContext> & WizardToolFields;
  * Drives the Phase 9 gap-fill loop without runtime introspection.
  * Source: derived from inputSchemas defined below + audit/dimensions/* suggestedToolCall values.
  */
-const TOOL_FIELD_MAP: Record<string, {
+const TOOL_FIELD_MAP: Record<SuggestedToolCall, {
   contextRequired: (keyof BusinessContext)[];
   contextOptional: (keyof BusinessContext)[];
   toolRequired: (keyof WizardToolFields)[];
