@@ -129,7 +129,7 @@ export function registerAllTools(server: McpServer): void {
             isError: true,
           };
         }
-        const report = await runAudit(target.trim());
+        const report = await runAudit(target.trim(), businessContext ?? null);
 
         // WIZ-01: Post-audit fork via MCP elicitation.
         // If the client supports elicitation, ask the user to pick a mode.

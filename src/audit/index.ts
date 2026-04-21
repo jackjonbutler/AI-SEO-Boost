@@ -10,8 +10,12 @@ import { checkSchemaMarkup } from './dimensions/schema.js';
 import { checkFaq } from './dimensions/faq.js';
 import { checkMarkdownMirrors } from './dimensions/markdown.js';
 import { fetchAndDetectFramework } from './framework.js';
+import type { BusinessContext } from '../types/index.js';
 
-export async function runAudit(target: string): Promise<AuditReport> {
+export async function runAudit(
+  target: string,
+  businessContext?: BusinessContext | null
+): Promise<AuditReport> {
   if (!target || typeof target !== 'string' || target.trim().length === 0) {
     throw new Error('target must be a non-empty string');
   }
@@ -39,7 +43,7 @@ export async function runAudit(target: string): Promise<AuditReport> {
   const findings = await Promise.all([
     checkLlmsTxt(probe, frameworkDetection),
     checkRobotsTxtAiAccess(probe, frameworkDetection),
-    checkSchemaMarkup(probe),
+    checkSchemaMarkup(probe, businessContext),
     checkFaq(probe),
     checkMarkdownMirrors(probe, frameworkDetection),
   ]);
