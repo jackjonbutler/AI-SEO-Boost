@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 ## Current Position
 
 Phase: 15 — Wizard Integration and Type Safety
-Plan: 02 of 02 complete
-Status: Phase complete — WIZ-01 dispatch table + WIZ-02 pre-seed delivered
-Last activity: 2026-04-21 — Completed 15-02-PLAN.md (typed dispatch table, accumulator pre-seed from suggestedToolCallArgs.recommendedType)
+Plan: 03 of 03 complete
+Status: Phase complete — all plans delivered; regression gate confirms 4/4 success criteria
+Last activity: 2026-04-21 — Completed 15-03-PLAN.md (offline smoke regression gate for WIZ-01 + WIZ-02 + tsc-clean)
 
-Progress: [██████░░░░░░░░░] Phase 15 plans complete (Phases 11, 12, 13, 14, 15 complete)
+Progress: [███████████████] Phase 15 plans complete (Phases 11, 12, 13, 14, 15 complete — v1.2 feature-complete)
 
 ## Performance Metrics
 
@@ -128,5 +128,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 15-02 — dispatch table replaces switch, accumulator pre-seed from suggestedToolCallArgs; tsc clean
-Next: Phase 15 complete — all plans delivered; project v1.2 feature-complete
+Stopped at: Completed 15-03 — offline regression gate confirms all 4 Phase 15 success criteria pass; v1.2 milestone closed
+Next: v1.2 feature-complete — Phases 11-15 all delivered; ready for release or next milestone planning
