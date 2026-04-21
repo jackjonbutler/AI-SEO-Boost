@@ -39,6 +39,14 @@ export async function runAudit(target: string): Promise<AuditReport> {
     checkMarkdownMirrors(probe),
   ]);
 
+  // Collect URLs actually probed by dimension checks (DIAG-03).
+  // Only dimensions wired with diagnostics (llms-txt, robots-ai) contribute.
+  // If no finding has diagnostics, pagesAudited is undefined — not an empty array.
+  const probedUrls = findings
+    .map(f => f.diagnostics?.checkedUrl)
+    .filter((u): u is string => u !== undefined);
+  const pagesAudited = probedUrls.length > 0 ? probedUrls : undefined;
+
   const order: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   findings.sort((a, b) => order[a.severity] - order[b.severity]);
 
@@ -46,5 +54,6 @@ export async function runAudit(target: string): Promise<AuditReport> {
     target: trimmed,
     generatedAt: new Date().toISOString(),
     findings,
+    pagesAudited,
   };
 }
