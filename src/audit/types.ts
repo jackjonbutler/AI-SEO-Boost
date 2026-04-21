@@ -15,6 +15,19 @@ export interface FrameworkDetection {
   confidence: FrameworkConfidence;
 }
 
+/**
+ * Exhaustive union of all tool call strings the wizard can dispatch.
+ * Every value here must have a corresponding key in TOOL_FIELD_MAP (tools/index.ts)
+ * and a handler in the dispatch table. Adding a new tool name here forces a
+ * compile error in the dispatch table until a handler is added.
+ */
+export type SuggestedToolCall =
+  | 'generate_llms_txt'
+  | 'configure_robots_txt'
+  | 'generate_schema_markup'
+  | 'generate_faq_content'
+  | 'generate_markdown_mirrors';
+
 export interface AuditFindingDiagnostics {
   /** The exact URL that was probed (e.g. "https://example.com/llms.txt"). */
   checkedUrl: string;
@@ -31,7 +44,7 @@ export interface AuditFinding {
   status: 'pass' | 'fail' | 'warning';
   severity: Severity;
   message: string;
-  suggestedToolCall?: string;
+  suggestedToolCall?: SuggestedToolCall;
   /** Pre-seeded args for wizard tool dispatch. Populated in Phase 15; declared here for type compatibility. */
   suggestedToolCallArgs?: Record<string, unknown>;
   /** HTTP evidence block — present when dimension made a targeted fetch. */
