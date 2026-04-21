@@ -125,6 +125,12 @@ Plans:
 3. The coverage check probes no more than 15–20 URLs total regardless of sitemap size, and labels its result "estimated coverage" so callers know it is a sample
 4. Auditing a site with no sitemap present falls back gracefully — the finding notes no sitemap was found rather than throwing an error or hanging
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 14-01-PLAN.md — Add sitemap helpers and replace binary URL check with coverage estimator in markdown.ts
+- [ ] 14-02-PLAN.md — Write smoke-phase14-coverage.mjs regression gate covering all four success criteria
+
 ---
 
 #### Phase 15: Wizard Integration and Type Safety
@@ -167,5 +173,5 @@ Plans:
 | 11. HTTP Diagnostic Metadata Capture | v1.2 | 3/3 | Complete | 2026-04-21 |
 | 12. Framework Detection | v1.2 | 3/3 | Complete | 2026-04-21 |
 | 13. Schema Type Inference | v1.2 | 2/2 | Complete | 2026-04-21 |
-| 14. Sitemap Coverage and Mirror Depth | v1.2 | 0/? | Planned | — |
+| 14. Sitemap Coverage and Mirror Depth | v1.2 | 0/2 | Planned | — |
 | 15. Wizard Integration and Type Safety | v1.2 | 0/? | Planned | — |
