@@ -77,6 +77,7 @@ export async function checkRobotsTxtAiAccess(
           severity: 'high',
           message: `Missing AI crawler rules for: ${missing.join(', ')}.${buildRobotsTxtPlacementNote(framework)}`,
           suggestedToolCall: 'configure_robots_txt',
+          suggestedToolCallArgs: { missingBots: missing },
           diagnostics,
         };
       } catch (fetchErr) {
@@ -113,6 +114,7 @@ export async function checkRobotsTxtAiAccess(
       severity: 'high',
       message: `Missing AI crawler rules for: ${missing.join(', ')}.${buildRobotsTxtPlacementNote(framework)}`,
       suggestedToolCall: 'configure_robots_txt',
+      suggestedToolCallArgs: { missingBots: missing },
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
