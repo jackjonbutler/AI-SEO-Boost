@@ -148,6 +148,13 @@ Plans:
 3. When the wizard reaches a finding for a missing `llms.txt`, the accumulator is pre-seeded with `target` and any other fields the audit already captured — the user is not re-asked for values the audit already knows
 4. `tsc --noEmit` passes with zero errors after Phase 15 changes, confirming no type regressions were introduced by the literal union narrowing
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Declare SuggestedToolCall union in types.ts + enrich robots-txt findings with suggestedToolCallArgs.missingBots
+- [ ] 15-02-PLAN.md — Replace wizard switch with Record<SuggestedToolCall, FixHandler> dispatch table + pre-seed acc.schemaTypes from suggestedToolCallArgs.recommendedType
+- [ ] 15-03-PLAN.md — Write smoke-phase15-wizard-integration.mjs regression gate covering all four Phase 15 success criteria
+
 ---
 
 - [x] Phase 11: HTTP Diagnostic Metadata Capture — completed 2026-04-21
@@ -174,4 +181,4 @@ Plans:
 | 12. Framework Detection | v1.2 | 3/3 | Complete | 2026-04-21 |
 | 13. Schema Type Inference | v1.2 | 2/2 | Complete | 2026-04-21 |
 | 14. Sitemap Coverage and Mirror Depth | v1.2 | 2/2 | Complete | 2026-04-21 |
-| 15. Wizard Integration and Type Safety | v1.2 | 0/? | Planned | — |
+| 15. Wizard Integration and Type Safety | v1.2 | 0/3 | Planned | — |
