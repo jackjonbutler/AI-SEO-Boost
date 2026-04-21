@@ -6,18 +6,35 @@ export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
 export type AuditDimension = 'llms-txt' | 'schema' | 'robots-ai' | 'faq' | 'markdown-mirrors';
 
+export interface AuditFindingDiagnostics {
+  /** The exact URL that was probed (e.g. "https://example.com/llms.txt"). */
+  checkedUrl: string;
+  /** HTTP status code received (e.g. 200, 404, 403). */
+  httpStatus: number;
+  /** Response body byte count from Content-Length header; null if header absent. */
+  contentLength: number | null;
+  /** Wall-clock milliseconds from request start to response headers received. */
+  responseTimeMs: number;
+}
+
 export interface AuditFinding {
   dimension: AuditDimension;
   status: 'pass' | 'fail' | 'warning';
   severity: Severity;
   message: string;
   suggestedToolCall?: string;
+  /** Pre-seeded args for wizard tool dispatch. Populated in Phase 15; declared here for type compatibility. */
+  suggestedToolCallArgs?: Record<string, unknown>;
+  /** HTTP evidence block — present when dimension made a targeted fetch. */
+  diagnostics?: AuditFindingDiagnostics;
 }
 
 export interface AuditReport {
   target: string;
   generatedAt: string;
   findings: AuditFinding[];
+  /** URLs probed during this audit run. Undefined if no dimension captured diagnostics. */
+  pagesAudited?: string[];
 }
 
 /**
