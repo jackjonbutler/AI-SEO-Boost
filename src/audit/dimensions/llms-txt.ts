@@ -4,9 +4,31 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { isUrl } from '../types.js';
-import type { AuditFinding, AuditFindingDiagnostics } from '../types.js';
+import type { AuditFinding, AuditFindingDiagnostics, FrameworkDetection } from '../types.js';
 
-export async function checkLlmsTxt(target: string): Promise<AuditFinding> {
+function buildLlmsTxtPlacementNote(fw: FrameworkDetection | null | undefined): string {
+  if (!fw || !fw.name) return ' Place llms.txt in your site root.';
+  switch (fw.name) {
+    case 'Next.js':
+    case 'Nuxt':
+    case 'Astro':
+      return ' For this framework: place llms.txt in the /public/ directory and redeploy.';
+    case 'WordPress':
+      return ' For WordPress: upload llms.txt to your site root (e.g. /var/www/html/llms.txt) via FTP or file manager — not inside /wp-content/.';
+    case 'Shopify':
+      return ' For Shopify: serve llms.txt via a custom page template or route — direct root file placement is not supported.';
+    case 'Hugo':
+    case 'Jekyll':
+      return ' Place llms.txt in your site root (static files folder) and rebuild.';
+    default:
+      return ' Place llms.txt in your site root.';
+  }
+}
+
+export async function checkLlmsTxt(
+  target: string,
+  framework?: FrameworkDetection | null
+): Promise<AuditFinding> {
   const dimension = 'llms-txt' as const;
   try {
     if (isUrl(target)) {
@@ -36,7 +58,7 @@ export async function checkLlmsTxt(target: string): Promise<AuditFinding> {
           dimension,
           status: 'fail',
           severity: 'critical',
-          message: 'llms.txt missing at site root',
+          message: `llms.txt missing at site root.${buildLlmsTxtPlacementNote(framework)}`,
           suggestedToolCall: 'generate_llms_txt',
           diagnostics,
         };
@@ -61,7 +83,7 @@ export async function checkLlmsTxt(target: string): Promise<AuditFinding> {
           dimension,
           status: 'fail',
           severity: 'critical',
-          message: 'llms.txt missing from folder root',
+          message: `llms.txt missing from folder root.${buildLlmsTxtPlacementNote(framework)}`,
           suggestedToolCall: 'generate_llms_txt',
         };
       }
