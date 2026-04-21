@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { AI_BOTS } from '../../generators/files/robots-txt.js';
 import { isUrl, originFor } from '../types.js';
-import type { AuditFinding } from '../types.js';
+import type { AuditFinding, AuditFindingDiagnostics } from '../types.js';
 
 // Re-export so audit consumers can reference the canonical list.
 export { AI_BOTS } from '../../generators/files/robots-txt.js';
@@ -22,33 +22,45 @@ export async function checkRobotsTxtAiAccess(target: string): Promise<AuditFindi
       const robotsUrl = `${originFor(target)}/robots.txt`;
       let res: Response;
       let text: string;
+      let responseTimeMs: number;
       try {
+        const startMs = Date.now();
         res = await fetch(robotsUrl, { signal: AbortSignal.timeout(5000) });
+        responseTimeMs = Date.now() - startMs;
+        const contentLengthHeader = res.headers.get('content-length');
         text = await res.text();
-      } catch (fetchErr) {
-        const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
-        return { dimension, status: 'warning', severity: 'medium', message: `Could not fetch ${robotsUrl}: ${msg}` };
-      }
-      if (res.status === 404) {
+        const diagnostics: AuditFindingDiagnostics = {
+          checkedUrl: robotsUrl,
+          httpStatus: res.status,
+          contentLength: contentLengthHeader !== null ? parseInt(contentLengthHeader, 10) : null,
+          responseTimeMs,
+        };
+        if (res.status === 404) {
+          return {
+            dimension,
+            status: 'fail',
+            severity: 'high',
+            message: 'robots.txt not found (404) — no AI crawler rules defined',
+            suggestedToolCall: 'configure_robots_txt',
+            diagnostics,
+          };
+        }
+        const missing = AI_BOTS.filter(b => !botAlreadyPresent(text, b));
+        if (missing.length === 0) {
+          return { dimension, status: 'pass', severity: 'low', message: 'All AI crawler rules present in robots.txt', diagnostics };
+        }
         return {
           dimension,
           status: 'fail',
           severity: 'high',
-          message: 'robots.txt not found (404) — no AI crawler rules defined',
+          message: `Missing AI crawler rules for: ${missing.join(', ')}`,
           suggestedToolCall: 'configure_robots_txt',
+          diagnostics,
         };
+      } catch (fetchErr) {
+        const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        return { dimension, status: 'warning', severity: 'medium', message: `Could not fetch ${robotsUrl}: ${msg}` };
       }
-      const missing = AI_BOTS.filter(b => !botAlreadyPresent(text, b));
-      if (missing.length === 0) {
-        return { dimension, status: 'pass', severity: 'low', message: 'All AI crawler rules present in robots.txt' };
-      }
-      return {
-        dimension,
-        status: 'fail',
-        severity: 'high',
-        message: `Missing AI crawler rules for: ${missing.join(', ')}`,
-        suggestedToolCall: 'configure_robots_txt',
-      };
     }
 
     // Local folder path
