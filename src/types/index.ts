@@ -39,6 +39,21 @@ export interface BusinessContext {
   description?: string;
 }
 
+/**
+ * HTTP provenance metadata captured at crawl time.
+ * Present only when source === 'crawl'; absent for local-source documents.
+ */
+export interface HttpMetadata {
+  /** HTTP status code received (e.g. 200). */
+  httpStatus: number;
+  /** Response body byte count from Content-Length header; null if header absent. */
+  contentLength: number | null;
+  /** Wall-clock milliseconds from request start to response headers received. */
+  responseTimeMs: number;
+  /** User-Agent string sent in the request. */
+  userAgent: string;
+}
+
 export interface MarkdownDocument {
   /** Absolute URL this document was sourced from. For local files, use file:// URI. */
   url: string;
@@ -52,6 +67,8 @@ export interface MarkdownDocument {
   frontmatter: Record<string, string>;
   /** Source type — allows downstream tools to vary behaviour. */
   source: 'local' | 'crawl';
+  /** HTTP acquisition metadata. Present only when source === 'crawl'. */
+  httpMetadata?: HttpMetadata;
 }
 
 export interface AcquisitionError {
