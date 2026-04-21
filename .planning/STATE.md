@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 **Core value:** Any website, pointed at this server, gets everything it needs to be recommended by ChatGPT, Claude, and Perplexity by name — with zero manual file editing.
-**Current focus:** v1.2 — Audit Observability & Framework Awareness — Phase 13 next
+**Current focus:** v1.2 — Audit Observability & Framework Awareness — Phase 14 next
 
 ## Current Position
 
 Phase: 13 — Schema Type Inference
-Plan: 02 of 03 complete
-Status: In progress — Plans 01 and 02 done, Plan 03 next
+Plan: 02 of 02 complete
+Status: Phase complete — all 2 plans done, SCH-01/02/03 closed
 Last activity: 2026-04-21 — Completed 13-02-PLAN.md (businessContext threaded through checkSchemaMarkup → runAudit → tools; SCH-01, SCH-02, SCH-03 closed; 6-scenario smoke test passes)
 
-Progress: [███░░░░░░░░░░░░] 2/5 phases complete (Phases 11 and 12 complete, Phase 13 in progress)
+Progress: [████░░░░░░░░░░░] 3/5 phases complete (Phases 11, 12, and 13 complete, Phase 14 next)
 
 ## Performance Metrics
 
