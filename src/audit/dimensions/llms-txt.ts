@@ -4,7 +4,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { isUrl } from '../types.js';
-import type { AuditFinding } from '../types.js';
+import type { AuditFinding, AuditFindingDiagnostics } from '../types.js';
 
 export async function checkLlmsTxt(target: string): Promise<AuditFinding> {
   const dimension = 'llms-txt' as const;
@@ -12,14 +12,24 @@ export async function checkLlmsTxt(target: string): Promise<AuditFinding> {
     if (isUrl(target)) {
       const url = new URL('/llms.txt', target).href;
       let res: Response;
+      let responseTimeMs: number;
       try {
+        const startMs = Date.now();
         res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+        responseTimeMs = Date.now() - startMs;
       } catch (fetchErr) {
         const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
         return { dimension, status: 'warning', severity: 'medium', message: `Could not reach ${url}: ${msg}` };
       }
+      const contentLengthHeader = res.headers.get('content-length');
+      const diagnostics: AuditFindingDiagnostics = {
+        checkedUrl: url,
+        httpStatus: res.status,
+        contentLength: contentLengthHeader !== null ? parseInt(contentLengthHeader, 10) : null,
+        responseTimeMs,
+      };
       if (res.status === 200) {
-        return { dimension, status: 'pass', severity: 'low', message: 'llms.txt found at site root' };
+        return { dimension, status: 'pass', severity: 'low', message: 'llms.txt found at site root', diagnostics };
       }
       if (res.status === 404) {
         return {
@@ -28,13 +38,15 @@ export async function checkLlmsTxt(target: string): Promise<AuditFinding> {
           severity: 'critical',
           message: 'llms.txt missing at site root',
           suggestedToolCall: 'generate_llms_txt',
+          diagnostics,
         };
       }
       return {
         dimension,
         status: 'warning',
         severity: 'medium',
-        message: `Unexpected HTTP status ${res.status} when probing ${url}`,
+        message: `HTTP ${res.status} when probing ${url}`,
+        diagnostics,
       };
     }
 
