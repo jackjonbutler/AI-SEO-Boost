@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 ## Current Position
 
 Phase: 13 — Schema Type Inference
-Plan: 01 of 03 complete
-Status: In progress — Plan 01 done, Plan 02 next
-Last activity: 2026-04-21 — Completed 13-01-PLAN.md (inferSchemaType() pure function + BUSINESS_TYPE_MAP + LOCAL_BUSINESS_SUBTYPES, all 15 assertions pass)
+Plan: 02 of 03 complete
+Status: In progress — Plans 01 and 02 done, Plan 03 next
+Last activity: 2026-04-21 — Completed 13-02-PLAN.md (businessContext threaded through checkSchemaMarkup → runAudit → tools; SCH-01, SCH-02, SCH-03 closed; 6-scenario smoke test passes)
 
 Progress: [███░░░░░░░░░░░░] 2/5 phases complete (Phases 11 and 12 complete, Phase 13 in progress)
 
@@ -90,6 +90,9 @@ Recent decisions affecting v1.2 work:
 - Phase 13-01: Omitted bare 'shop' keyword from OnlineStore map — 'vehicle wrap shop' must return 'LocalBusiness'; 'ecommerce', 'e-commerce', 'online store', 'retail' are sufficient
 - Phase 13-01: Omitted ' app ' keyword — 'software', 'saas', 'platform', 'tool' cover SoftwareApplication without false-positive risk on common English words
 - Phase 13-01: LOCAL_BUSINESS_SUBTYPES excludes SoftwareApplication and OnlineStore — they extend Thing/CreativeWork, not LocalBusiness on schema.org; require separate pass logic in schema.ts
+- Phase 13-02: LocalBusiness accepted as parent type for LOCAL_BUSINESS_SUBTYPES members (Restaurant, LegalService, etc.) — conservative page markup using parent type is acceptable
+- Phase 13-02: SoftwareApplication and OnlineStore require exact match — LocalBusiness does NOT satisfy them
+- Phase 13-02: businessContext optional throughout chain (checkSchemaMarkup, runAudit) — zero breaking changes to existing callers
 
 ### v1.2 Architecture Notes (from research)
 
@@ -113,5 +116,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 13-01 — inferSchemaType() pure function implemented; BUSINESS_TYPE_MAP + LOCAL_BUSINESS_SUBTYPES exported; all 15 assertions pass; tsc --noEmit zero errors
-Next: Execute Phase 13 Plan 02 — wire inferSchemaType() into checkSchemaMarkup in src/audit/dimensions/schema.ts
+Stopped at: Completed 13-02 — businessContext threading complete; SCH-01/02/03 verified via 6-scenario smoke test; tsc --noEmit zero errors
+Next: Execute Phase 13 Plan 03 (if exists) or phase transition
