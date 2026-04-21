@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 ## Current Position
 
-Phase: 11 — HTTP Diagnostic Metadata Capture
-Plan: 03 of 03 complete
-Status: Phase 11 complete — all 3 plans done
-Last activity: 2026-04-21 — Completed 11-03-PLAN.md (pagesAudited population + full build verification)
+Phase: 12 — Framework Detection
+Plan: 01 of 03 complete
+Status: In progress — Plan 01 done, Plans 02 and 03 pending
+Last activity: 2026-04-21 — Completed 12-01-PLAN.md (FrameworkDetection types + detectFramework() + fetchAndDetectFramework())
 
-Progress: [█░░░░░░░░░░░░░░] 1/5 phases complete (Phase 11 complete, Phase 12 next)
+Progress: [██░░░░░░░░░░░░░] 1/5 phases complete (Phase 11 complete, Phase 12 in progress — 1/3 plans done)
 
 ## Performance Metrics
 
@@ -77,6 +77,10 @@ Recent decisions affecting v1.2 work:
 - Phase 11-02: CRAWL_USER_AGENT module constant reused in both fetch headers and httpMetadata.userAgent (single source of truth)
 - Phase 11-03: pagesAudited is undefined (not []) when no finding has diagnostics — avoids misleading empty array in callers; optional field matches AuditReport.pagesAudited?: string[]
 - Phase 11-03: probedUrls derivation placed after Promise.all and before sort — severity-first sort order unchanged
+- Phase 12-01: FrameworkDetection is structured { name, confidence } not bare string — FWK-03 requires confidence field accessible to callers and dimension helpers
+- Phase 12-01: fetchAndDetectFramework catches ALL errors (AbortSignal timeout included) and returns null — required to prevent runAudit Promise.all rejection (Pitfall 4)
+- Phase 12-01: detectFramework kept pure (no I/O) — runAudit owns the fetch and passes html+headers in; ensures unit-testability without network mocking
+- Phase 12-01: Hugo and Jekyll included with only weak signals — confidence ceiling is 'low', honest about meta generator tag being frequently stripped
 
 ### v1.2 Architecture Notes (from research)
 
@@ -100,5 +104,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Phase 11 complete — all 3 plans done; pagesAudited wired into runAudit()
-Next: Execute Phase 12 — framework detection (detectFramework() in src/audit/framework.ts)
+Stopped at: Completed 12-01 — FrameworkDetection types + detectFramework() + fetchAndDetectFramework()
+Next: Execute Phase 12 Plan 02 — dimension message updates (framework-aware fix suggestions in llms-txt, robots-txt, markdown)
