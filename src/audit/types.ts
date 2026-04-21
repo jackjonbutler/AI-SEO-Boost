@@ -6,6 +6,15 @@ export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
 export type AuditDimension = 'llms-txt' | 'schema' | 'robots-ai' | 'faq' | 'markdown-mirrors';
 
+export type FrameworkConfidence = 'high' | 'medium' | 'low' | 'none';
+
+export interface FrameworkDetection {
+  /** Detected framework name, e.g. "Next.js", "WordPress", "Nuxt". Null when no signals matched. */
+  name: string | null;
+  /** Confidence level. 'high' requires 2+ independent signals (FWK-03). */
+  confidence: FrameworkConfidence;
+}
+
 export interface AuditFindingDiagnostics {
   /** The exact URL that was probed (e.g. "https://example.com/llms.txt"). */
   checkedUrl: string;
@@ -35,6 +44,8 @@ export interface AuditReport {
   findings: AuditFinding[];
   /** URLs probed during this audit run. Undefined if no dimension captured diagnostics. */
   pagesAudited?: string[];
+  /** Detected web framework (Next.js, WordPress, etc.) with confidence level. Null when detection attempted but no signals matched. Undefined when target is local (no detection attempted). */
+  framework?: FrameworkDetection | null;
 }
 
 /**
