@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 ## Current Position
 
 Phase: 11 — HTTP Diagnostic Metadata Capture
-Plan: 01 of 03 complete
-Status: In progress — Plan 01 complete, Plans 02–03 remaining
-Last activity: 2026-04-21 — Completed 11-01-PLAN.md (type declarations)
+Plan: 02 of 03 complete
+Status: In progress — Plans 01–02 complete, Plan 03 remaining
+Last activity: 2026-04-21 — Completed 11-02-PLAN.md (HTTP metadata capture in fetching files)
 
-Progress: [░░░░░░░░░░░░░░░] 0/5 phases complete (Phase 11 in progress: 1/3 plans done)
+Progress: [░░░░░░░░░░░░░░░] 0/5 phases complete (Phase 11 in progress: 2/3 plans done)
 
 ## Performance Metrics
 
@@ -72,6 +72,9 @@ Recent decisions affecting v1.2 work:
 - Phase 10: generate_markdown_mirrors re-crawls target from outer closure (Phase 9 envelope did not include docs)
 - Phase 10 smoke test: per-tool confirmation detection (message.includes('Fix applied:')) as first branch in elicitation handlers — prevents callCount miscount after Phase 10 adds non-gap-fill elicitation calls
 - Phase 10 smoke test: each scenario prints its own SMOKE OK line for per-scenario visibility
+- Phase 11-02: robots-txt.ts diagnostics built inside try block (not after) — keeps definite assignment valid; all response-path returns moved inside try
+- Phase 11-02: contentLength strictly from Content-Length header — null when absent; text.length NOT used as fallback
+- Phase 11-02: CRAWL_USER_AGENT module constant reused in both fetch headers and httpMetadata.userAgent (single source of truth)
 
 ### v1.2 Architecture Notes (from research)
 
@@ -95,5 +98,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Phase 11 Plan 01 complete — type declarations done
-Next: Execute Phase 11 Plan 02 — crawl.ts HTTP metadata capture
+Stopped at: Phase 11 Plan 02 complete — HTTP metadata capture wired into fetching files
+Next: Execute Phase 11 Plan 03 — audit/index.ts pagesAudited count + tool output
