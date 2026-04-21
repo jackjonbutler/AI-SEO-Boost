@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 ## Current Position
 
 Phase: 15 — Wizard Integration and Type Safety
-Plan: 01 of 02 complete
-Status: In progress — WIZ-01 type foundation complete; Plan 02 next
-Last activity: 2026-04-21 — Completed 15-01-PLAN.md (SuggestedToolCall union, narrowed AuditFinding.suggestedToolCall, robots-txt missingBots enrichment)
+Plan: 02 of 02 complete
+Status: Phase complete — WIZ-01 dispatch table + WIZ-02 pre-seed delivered
+Last activity: 2026-04-21 — Completed 15-02-PLAN.md (typed dispatch table, accumulator pre-seed from suggestedToolCallArgs.recommendedType)
 
-Progress: [█████░░░░░░░░░░] 4/5 phases complete (Phases 11, 12, 13, and 14 complete, Phase 15 in progress)
+Progress: [██████░░░░░░░░░] Phase 15 plans complete (Phases 11, 12, 13, 14, 15 complete)
 
 ## Performance Metrics
 
@@ -101,6 +101,10 @@ Recent decisions affecting v1.2 work:
 - Phase 15-01: SuggestedToolCall is a plain string-literal union in src/audit/types.ts (not const enum/runtime array) — consistent with Severity and AuditDimension; zero runtime cost
 - Phase 15-01: SuggestedToolCall placed in src/audit/types.ts not src/types/index.ts — audit-domain-scoped; avoids leaf-node import cycle
 - Phase 15-01: suggestedToolCallArgs.missingBots added only to missing.length > 0 fail paths in robots-txt.ts — 404/ENOENT paths have no missing array; tool re-detects from disk at execution time
+- Phase 15-02: FixHandler type and dispatchTable const declared inside registerAllTools — handlers close over acc, fixResults, fixErrors, target, server; module-scope would require threading 5 params (RESEARCH.md Pitfall 4)
+- Phase 15-02: generate_markdown_mirrors handler renames local isUrl to isUrlTarget — avoids shadowing exported isUrl() from audit/types.ts
+- Phase 15-02: missingBots deliberately not seeded into acc — no AccumulatedContext field maps to it; patchRobotsTxt re-detects from disk (RESEARCH.md Pitfall 6)
+- Phase 15-02: !acc.schemaTypes guard on recommendedType seed prevents overwriting user-supplied schemaTypes from earlier iterations (RESEARCH.md Pitfall 5)
 
 ### v1.2 Architecture Notes (from research)
 
@@ -124,5 +128,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 15-01 — SuggestedToolCall union + AuditFinding narrowing + robots-txt missingBots enrichment; tsc clean
-Next: Phase 15 Plan 02 — dispatch-table refactor and accumulator pre-seeding in tools/index.ts
+Stopped at: Completed 15-02 — dispatch table replaces switch, accumulator pre-seed from suggestedToolCallArgs; tsc clean
+Next: Phase 15 complete — all plans delivered; project v1.2 feature-complete
