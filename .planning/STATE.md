@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 ## Current Position
 
 Phase: 14 — Sitemap Coverage and Mirror Depth
-Plan: 01 of 01 complete
-Status: Phase complete — COV-01/COV-02/COV-03 closed
-Last activity: 2026-04-21 — Completed 14-01-PLAN.md (sitemap-driven coverage estimator in checkMarkdownMirrors; sitemapindex detection; 20-URL sample cap; tsc clean)
+Plan: 02 of 02 complete
+Status: Phase complete — COV-01/COV-02/COV-03 closed; regression gate added
+Last activity: 2026-04-21 — Completed 14-02-PLAN.md (offline smoke regression gate for all four Phase 14 success criteria; all [PASS])
 
 Progress: [█████░░░░░░░░░░] 4/5 phases complete (Phases 11, 12, 13, and 14 complete, Phase 15 next)
 
@@ -121,5 +121,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 14-01 — sitemap coverage estimator complete; COV-01/COV-02/COV-03 closed; tsc --noEmit zero errors
+Stopped at: Completed 14-02 — offline smoke regression gate; all four COV scenarios pass; phase 14 fully closed
 Next: Phase 15 — Wizard Type Narrowing (WIZ-01)
