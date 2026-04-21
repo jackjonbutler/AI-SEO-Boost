@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 ## Current Position
 
-Phase: 13 — Schema Type Inference
-Plan: 02 of 02 complete
-Status: Phase complete — all 2 plans done, SCH-01/02/03 closed
-Last activity: 2026-04-21 — Completed 13-02-PLAN.md (businessContext threaded through checkSchemaMarkup → runAudit → tools; SCH-01, SCH-02, SCH-03 closed; 6-scenario smoke test passes)
+Phase: 14 — Sitemap Coverage and Mirror Depth
+Plan: 01 of 01 complete
+Status: Phase complete — COV-01/COV-02/COV-03 closed
+Last activity: 2026-04-21 — Completed 14-01-PLAN.md (sitemap-driven coverage estimator in checkMarkdownMirrors; sitemapindex detection; 20-URL sample cap; tsc clean)
 
-Progress: [████░░░░░░░░░░░] 3/5 phases complete (Phases 11, 12, and 13 complete, Phase 14 next)
+Progress: [█████░░░░░░░░░░] 4/5 phases complete (Phases 11, 12, 13, and 14 complete, Phase 15 next)
 
 ## Performance Metrics
 
@@ -93,6 +93,11 @@ Recent decisions affecting v1.2 work:
 - Phase 13-02: LocalBusiness accepted as parent type for LOCAL_BUSINESS_SUBTYPES members (Restaurant, LegalService, etc.) — conservative page markup using parent type is acceptable
 - Phase 13-02: SoftwareApplication and OnlineStore require exact match — LocalBusiness does NOT satisfy them
 - Phase 13-02: businessContext optional throughout chain (checkSchemaMarkup, runAudit) — zero breaking changes to existing callers
+- Phase 14-01: cheerio loaded with { xml: true } (not deprecated xmlMode: true) — per research flag verified before Phase 14
+- Phase 14-01: Sitemap index: fetch only first child sitemap — fetching all defeats the 20-probe sample cap
+- Phase 14-01: Coverage in message string only — AuditFindingDiagnostics.checkedUrl is singular string, not array; no types.ts changes
+- Phase 14-01: null sentinel from fetchSitemapUrls = no sitemap/unreachable (warning); [] = empty sitemap (warning); string[] = run coverage
+- Phase 14-01: Thresholds: 100% sampled → pass, 1-99% → warning, 0% → fail
 
 ### v1.2 Architecture Notes (from research)
 
@@ -116,5 +121,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 13-02 — businessContext threading complete; SCH-01/02/03 verified via 6-scenario smoke test; tsc --noEmit zero errors
-Next: Execute Phase 13 Plan 03 (if exists) or phase transition
+Stopped at: Completed 14-01 — sitemap coverage estimator complete; COV-01/COV-02/COV-03 closed; tsc --noEmit zero errors
+Next: Phase 15 — Wizard Type Narrowing (WIZ-01)
