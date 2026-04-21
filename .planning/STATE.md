@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 
 ## Current Position
 
-Phase: 12 — Framework Detection
-Plan: 03 of 03 complete
-Status: Phase complete — all 3 plans done, FWK-01/02/03 closed
-Last activity: 2026-04-21 — Completed 12-03-PLAN.md (wired fetchAndDetectFramework into runAudit, all Phase 12 criteria verified)
+Phase: 13 — Schema Type Inference
+Plan: 01 of 03 complete
+Status: In progress — Plan 01 done, Plan 02 next
+Last activity: 2026-04-21 — Completed 13-01-PLAN.md (inferSchemaType() pure function + BUSINESS_TYPE_MAP + LOCAL_BUSINESS_SUBTYPES, all 15 assertions pass)
 
-Progress: [███░░░░░░░░░░░░] 2/5 phases complete (Phases 11 and 12 complete, Phase 13 next)
+Progress: [███░░░░░░░░░░░░] 2/5 phases complete (Phases 11 and 12 complete, Phase 13 in progress)
 
 ## Performance Metrics
 
@@ -87,6 +87,9 @@ Recent decisions affecting v1.2 work:
 - Phase 12-03: resolve framework before dimension Promise.all (not inside it) — Approach A (param passing) requires framework at message-construction time; correctness wins over 1 extra RT
 - Phase 12-03: checkSchemaMarkup and checkFaq remain single-arg — not framework-aware; their messages don't vary by framework
 - Phase 12-03: AuditReport.framework is optional field — zero breaking changes to wizard or existing callers
+- Phase 13-01: Omitted bare 'shop' keyword from OnlineStore map — 'vehicle wrap shop' must return 'LocalBusiness'; 'ecommerce', 'e-commerce', 'online store', 'retail' are sufficient
+- Phase 13-01: Omitted ' app ' keyword — 'software', 'saas', 'platform', 'tool' cover SoftwareApplication without false-positive risk on common English words
+- Phase 13-01: LOCAL_BUSINESS_SUBTYPES excludes SoftwareApplication and OnlineStore — they extend Thing/CreativeWork, not LocalBusiness on schema.org; require separate pass logic in schema.ts
 
 ### v1.2 Architecture Notes (from research)
 
@@ -110,5 +113,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 12-03 — runAudit() wired with framework detection; AuditReport.framework populated; smoke-phase12-framework.mjs verified all 4 Phase 12 success criteria
-Next: Execute Phase 13 — Schema Type Inference (new src/audit/schema-type-map.ts)
+Stopped at: Completed 13-01 — inferSchemaType() pure function implemented; BUSINESS_TYPE_MAP + LOCAL_BUSINESS_SUBTYPES exported; all 15 assertions pass; tsc --noEmit zero errors
+Next: Execute Phase 13 Plan 02 — wire inferSchemaType() into checkSchemaMarkup in src/audit/dimensions/schema.ts
