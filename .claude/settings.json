@@ -10,10 +10,30 @@
       "Read(//c/Users/jackb/.claude/projects/c--Users-jackb-Documents-MyMCPServers-AI-SEO-Boost/memory/**)",
       "WebSearch",
       "Bash(npx tsc *)",
-      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs\\(phase-2\\): complete phase execution\" --files .planning/ROADMAP.md .planning/STATE.md \".planning/phases/02-acquisition-pipeline/02-VERIFICATION.md\")"
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs\\(phase-2\\): complete phase execution\" --files .planning/ROADMAP.md .planning/STATE.md \".planning/phases/02-acquisition-pipeline/02-VERIFICATION.md\")",
+      "Read(//c/Users/jackb/AppData/Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/**)",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs\\(06-01\\): complete README — Phase 6 done, DIST-01 closed\" --files .planning/phases/06-distribution/06-01-SUMMARY.md .planning/STATE.md)",
+      "Read(//c/Users/jackb/Documents/MyMCPServers/AI SEO Boost/**)",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs\\(phase-6\\): complete phase execution — 4/4 must-haves verified\" --files .planning/ROADMAP.md .planning/STATE.md \".planning/phases/06-distribution/06-VERIFICATION.md\")",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js milestone complete \"v1.0\" --name \"MVP\")",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs: start milestone v1.1 Interactive Guided Remediation\" --files .planning/PROJECT.md .planning/STATE.md)",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js init new-milestone)",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js roadmap analyze)",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js milestone complete \"v1.1\" --name \"Interactive Guided Remediation\")",
+      "Skill(gsd:new-milestone)",
+      "Skill(gsd:new-milestone:*)",
+      "Bash(node -e ' *)",
+      "Bash(node C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js commit \"docs: v1.2 research complete — STACK, FEATURES, ARCHITECTURE, PITFALLS, SUMMARY\" --files .planning/research/STACK.md .planning/research/FEATURES.md .planning/research/ARCHITECTURE.md .planning/research/PITFALLS.md .planning/research/SUMMARY.md)",
+      "Bash(node \"C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js\" commit \"docs: v1.2 research complete\" --files \".planning/research/STACK.md\" \".planning/research/FEATURES.md\" \".planning/research/ARCHITECTURE.md\" \".planning/research/PITFALLS.md\" \".planning/research/SUMMARY.md\")",
+      "Bash(node \"C:/Users/jackb/.claude/get-shit-done/bin/gsd-tools.js\" --help)",
+      "Read(//c/Users/jackb/.claude/get-shit-done/bin/**)",
+      "Skill(gsd:audit-milestone)",
+      "Skill(gsd:audit-milestone:*)"
     ],
     "additionalDirectories": [
-      "c:\\Users\\jackb\\Documents\\MyMCPServers\\AI SEO Boost"
+      "c:\\Users\\jackb\\Documents\\MyMCPServers\\AI SEO Boost",
+      "C:\\Users\\jackb\\AppData\\Local\\Packages\\Claude_pzs8sxrjxfjjc\\LocalCache\\Roaming\\Claude",
+      "\\tmp"
     ]
   }
 }

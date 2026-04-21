@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ai-seo-boost__audit_ai_seo",
+      "WebFetch(domain:mike-kirby.com)",
+      "mcp__ai-seo-boost__generate_faq_content",
+      "mcp__ai-seo-boost__generate_llms_txt",
+      "mcp__ai-seo-boost__configure_robots_txt",
+      "mcp__ai-seo-boost__generate_schema_markup",
+      "mcp__ai-seo-boost__generate_markdown_mirrors"
+    ]
+  }
+}
