@@ -14,7 +14,7 @@ import pLimit from 'p-limit';
 import * as cheerio from 'cheerio';
 import { stripChrome } from '../processing/strip.js';
 import { convertToMarkdown } from '../processing/convert.js';
-import type { AcquisitionResult, MarkdownDocument, AcquisitionError } from '../types/index.js';
+import type { AcquisitionResult, MarkdownDocument, AcquisitionError, HttpMetadata } from '../types/index.js';
 
 export interface CrawlOptions {
   /** Hard maximum number of pages to fetch and return. Default: 50. */
@@ -31,6 +31,8 @@ export const DEFAULT_CRAWL_OPTIONS: CrawlOptions = {
   concurrency: 3,
   timeoutMs: 10_000,
 };
+
+const CRAWL_USER_AGENT = 'ai-seo-boost/1.2 (+https://github.com/jackjonbutler/ai-seo-boost)';
 
 // Normalise a URL for deduplication: strip trailing slash from path (except root),
 // strip fragment. This prevents https://example.com and https://example.com/ being
@@ -114,13 +116,19 @@ async function fetchPage(
   try {
     // AbortSignal.timeout() — each call is independent; a timeout on one fetch
     // does not affect other concurrent fetches.
-    const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    const startMs = Date.now();
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { 'User-Agent': CRAWL_USER_AGENT },
+    });
+    const responseTimeMs = Date.now() - startMs;
 
     if (!res.ok) {
       const error: AcquisitionError = { url, error: `HTTP ${res.status}`, source: 'crawl' };
       return { result: error, discoveredLinks: [] };
     }
 
+    const contentLengthHeader = res.headers.get('content-length');
     const raw = await res.text();
 
     // Discover links from raw HTML BEFORE stripping — chrome elements (nav, header)
@@ -137,6 +145,12 @@ async function fetchPage(
       markdown,
       frontmatter: { title, url, description },
       source: 'crawl',
+      httpMetadata: {
+        httpStatus: res.status,
+        contentLength: contentLengthHeader !== null ? parseInt(contentLengthHeader, 10) : null,
+        responseTimeMs,
+        userAgent: CRAWL_USER_AGENT,
+      } satisfies HttpMetadata,
     };
 
     return { result: doc, discoveredLinks };
