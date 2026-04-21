@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-20 after v1.1 milestone)
 ## Current Position
 
 Phase: 12 — Framework Detection
-Plan: 01 of 03 complete
-Status: In progress — Plan 01 done, Plans 02 and 03 pending
-Last activity: 2026-04-21 — Completed 12-01-PLAN.md (FrameworkDetection types + detectFramework() + fetchAndDetectFramework())
+Plan: 02 of 03 complete
+Status: In progress — Plans 01 and 02 done, Plan 03 pending
+Last activity: 2026-04-21 — Completed 12-02-PLAN.md (framework-aware fix suggestions in llms-txt, robots-txt, markdown dimensions)
 
-Progress: [██░░░░░░░░░░░░░] 1/5 phases complete (Phase 11 complete, Phase 12 in progress — 1/3 plans done)
+Progress: [██░░░░░░░░░░░░░] 1/5 phases complete (Phase 11 complete, Phase 12 in progress — 2/3 plans done)
 
 ## Performance Metrics
 
@@ -81,6 +81,9 @@ Recent decisions affecting v1.2 work:
 - Phase 12-01: fetchAndDetectFramework catches ALL errors (AbortSignal timeout included) and returns null — required to prevent runAudit Promise.all rejection (Pitfall 4)
 - Phase 12-01: detectFramework kept pure (no I/O) — runAudit owns the fetch and passes html+headers in; ensures unit-testability without network mocking
 - Phase 12-01: Hugo and Jekyll included with only weak signals — confidence ceiling is 'low', honest about meta generator tag being frequently stripped
+- Phase 12-02: buildPlacementNote helpers are module-scope pure functions — no I/O, easily unit-testable
+- Phase 12-02: llms.txt fallback returns generic 'Place in site root' message (non-empty); robots.txt and markdown fallbacks return '' (existing messages self-sufficient)
+- Phase 12-02: null/undefined framework accepted via FrameworkDetection | null | undefined union — matches fetchAndDetectFramework() return type
 
 ### v1.2 Architecture Notes (from research)
 
@@ -104,5 +107,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-21
-Stopped at: Completed 12-01 — FrameworkDetection types + detectFramework() + fetchAndDetectFramework()
-Next: Execute Phase 12 Plan 02 — dimension message updates (framework-aware fix suggestions in llms-txt, robots-txt, markdown)
+Stopped at: Completed 12-02 — framework-aware placement note helpers added to checkLlmsTxt, checkRobotsTxtAiAccess, checkMarkdownMirrors
+Next: Execute Phase 12 Plan 03 — wire fetchAndDetectFramework() into runAudit() and pass framework to dimension checks
