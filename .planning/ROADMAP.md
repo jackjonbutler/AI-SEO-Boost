@@ -102,6 +102,12 @@ Plans:
 2. Auditing a site with no `businessContext` provided passes the schema check when any valid JSON-LD `@type` is present — it does not fail solely because `LocalBusiness` is absent
 3. The schema finding's `suggestedToolCallArgs` is seeded with a `recommendedType` field derived from the inferred type, so the wizard can pre-fill `generate_schema_markup` without asking the user to choose a type
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — TDD: create src/audit/schema-type-map.ts with inferSchemaType() pure function, verified by assertion script
+- [ ] 13-02-PLAN.md — Wire businessContext through checkSchemaMarkup, runAudit, and tools/index.ts; verify end-to-end with smoke-phase13-schema.mjs
+
 ---
 
 #### Phase 14: Sitemap Coverage and Mirror Depth
@@ -160,6 +166,6 @@ Plans:
 | 10. Tool Execution Engine | v1.1 | 2/2 | Complete | 2026-04-20 |
 | 11. HTTP Diagnostic Metadata Capture | v1.2 | 3/3 | Complete | 2026-04-21 |
 | 12. Framework Detection | v1.2 | 3/3 | Complete | 2026-04-21 |
-| 13. Schema Type Inference | v1.2 | 0/? | Planned | — |
+| 13. Schema Type Inference | v1.2 | 0/2 | Planned | — |
 | 14. Sitemap Coverage and Mirror Depth | v1.2 | 0/? | Planned | — |
 | 15. Wizard Integration and Type Safety | v1.2 | 0/? | Planned | — |
